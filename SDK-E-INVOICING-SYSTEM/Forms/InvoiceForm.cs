@@ -160,7 +160,13 @@ public class GenerateInvoiceForm : Form
         GroupBox gbItem = CreateGroupBox("🧾 Invoice Item", new Size(330, 300));
 
         cmbScenario = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+        cmbScenario.Items.Add("SN001");
         cmbScenario.Items.Add("SN002");
+        cmbScenario.Items.Add("SN003");
+        cmbScenario.Items.Add("SN004");
+        cmbScenario.Items.Add("SN005");
+        cmbScenario.Items.Add("SN006");
+
         cmbScenario.SelectedIndex = 0;
 
         txtQuantity = CreateTextBox();
