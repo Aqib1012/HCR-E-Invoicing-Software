@@ -16,7 +16,7 @@ public class SellerForm : Form
 
     public SellerForm()
     {
-        this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
+        
         this.Text = "Seller Management";
         this.WindowState = FormWindowState.Maximized;
         this.BackColor = Color.White;

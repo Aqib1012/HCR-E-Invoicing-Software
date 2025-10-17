@@ -14,7 +14,7 @@ public class InvoiceViewerForm : Form
     public InvoiceViewerForm()
     {
         // ===== FORM PROPERTIES =====
-        this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
+      
         this.Text = "Invoice Viewer - Sidekick";
         this.WindowState = FormWindowState.Maximized;
         this.BackColor = Color.White;
@@ -174,7 +174,7 @@ SELECT
     i.postStatus
 FROM Invoices i
 WHERE i.invoiceDate BETWEEN @startDate AND @endDate
-ORDER BY i.invoiceId ASC";
+ORDER BY i.invoiceId DESC";
 
                 using (var da = new System.Data.SQLite.SQLiteDataAdapter(sql, conn))
                 {

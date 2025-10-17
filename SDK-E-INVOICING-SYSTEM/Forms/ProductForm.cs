@@ -14,7 +14,7 @@ public class ProductForm : Form
 
     public ProductForm()
     {
-        this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
+        
         this.Text = "Product Management";
         this.WindowState = FormWindowState.Maximized;
         this.BackColor = Color.White;
@@ -236,7 +236,7 @@ public class ProductForm : Form
             DatabaseHelper.AddProduct(txtHsCode.Text, txtProductDescription.Text, txtRate.Text, txtUoM.Text);
             LoadProducts();
             ClearFields();
-            MessageBox.Show("Product added successfully.");
+            //MessageBox.Show("Product added successfully.");
         }
         catch (Exception ex)
         {

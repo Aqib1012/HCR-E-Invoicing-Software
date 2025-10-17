@@ -61,7 +61,7 @@ public class GenerateInvoiceForm : Form
 
     public GenerateInvoiceForm()
     {
-        this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
+        
         this.Text = "Generate Invoice";
         this.WindowState = FormWindowState.Maximized;
         this.BackColor = Color.WhiteSmoke;
@@ -160,13 +160,16 @@ public class GenerateInvoiceForm : Form
         GroupBox gbItem = CreateGroupBox("🧾 Invoice Item", new Size(330, 300));
 
         cmbScenario = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+        cmbScenario.Items.Add("Select");
         cmbScenario.Items.Add("SN001");
         cmbScenario.Items.Add("SN002");
         cmbScenario.Items.Add("SN003");
         cmbScenario.Items.Add("SN004");
         cmbScenario.Items.Add("SN005");
         cmbScenario.Items.Add("SN006");
-
+        cmbScenario.Items.Add("SN007");
+        cmbScenario.Items.Add("SN008");
+        cmbScenario.Items.Add("SN009");
         cmbScenario.SelectedIndex = 0;
 
         txtQuantity = CreateTextBox();
@@ -194,8 +197,24 @@ public class GenerateInvoiceForm : Form
         //dtInvoiceDate.Format = DateTimePickerFormat.Short;
 
         cmbSaleType = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
-        // cmbSaleType.Items.Add("Goods at standard rate");
-        //cmbSaleType.SelectedIndex = 0;/
+        cmbSaleType.Items.Add("Select");
+        cmbSaleType.Items.Add("Goods at standard rate (default)");
+        cmbSaleType.Items.Add("Goods at Reduced Rate");
+        cmbSaleType.Items.Add("Goods at Zero-rate");
+        cmbSaleType.Items.Add("Petroleum Products");
+        cmbSaleType.Items.Add("Electricity Supply to Retailers");
+        cmbSaleType.Items.Add("SIM");
+        cmbSaleType.Items.Add("Gas to CNG stations");
+        cmbSaleType.Items.Add("Mobile Phones");
+        cmbSaleType.Items.Add("Processing/Conversion of Goods");
+        cmbSaleType.Items.Add("3rd Schedule Goods");
+        cmbSaleType.Items.Add("Goods (FED in ST Mode)");
+        cmbSaleType.Items.Add("Services (FED in ST Mode)");
+        cmbSaleType.Items.Add("Services");
+        cmbSaleType.Items.Add("Exempt goods");
+        cmbSaleType.Items.Add("Ship breaking");
+
+        cmbSaleType.SelectedIndex = 0;
 
         AddLabeledControls(gbItem,
             //  ("Invoice No:", txtInvoiceNumber),
@@ -208,7 +227,7 @@ public class GenerateInvoiceForm : Form
             ("Sales Tax:", txtSalesTaxAmount),
             ("Further Tax:", txtFurtherTaxAmount),
             /* ("Extra Tax:", txtExtraTaxAmount),*/
-            /*  ("Sale Type:", cmbSaleType),*/
+             ("Sale Type:", cmbSaleType),
             ("Notes:", txtItemNotes) // Add Notes to UI
         );
 
@@ -245,6 +264,7 @@ public class GenerateInvoiceForm : Form
         dgvItems.Columns.Add("ValueExclGST", "Value Excl. GST");
         dgvItems.Columns.Add("SalesTaxAmount", "Sales Tax Amount");
         dgvItems.Columns.Add("FurtherTaxAmount", "Further Tax Amount");
+        dgvItems.Columns.Add("saleType", "Sale Type");
         dgvItems.Columns.Add("Notes", "Notes");
 
 
@@ -411,7 +431,7 @@ public class GenerateInvoiceForm : Form
             txtSalesTaxAmount.Text = row.Cells["SalesTaxAmount"].Value?.ToString();
             txtFurtherTaxAmount.Text = row.Cells["FurtherTaxAmount"].Value?.ToString();
             //txtExtraTaxAmount.Text = row.Cells["ExtraTaxAmount"].Value?.ToString();
-            //cmbSaleType.Text = row.Cells["SaleType"].Value?.ToString();
+            cmbSaleType.Text = row.Cells["saleType"].Value?.ToString();
             txtItemNotes.Text = row.Cells["Notes"].Value?.ToString();
 
             btnAddItem.Text = "✏️ Update Item";
@@ -434,7 +454,8 @@ public class GenerateInvoiceForm : Form
         row.Cells["SalesTaxAmount"].Value = txtSalesTaxAmount.Text;
         row.Cells["FurtherTaxAmount"].Value = txtFurtherTaxAmount.Text;
         // row.Cells["ExtraTaxAmount"].Value = txtExtraTaxAmount.Text;
-        // row.Cells["SaleType"].Value = cmbSaleType.Text;
+        row.Cells["saleType"].Value = cmbSaleType.Text;
+
         row.Cells["Notes"].Value = txtItemNotes.Text;
     }
 
@@ -689,8 +710,7 @@ public class GenerateInvoiceForm : Form
             {
 
                 PostAndSave(invoiceNumber);
-                MessageBox.Show($"✅ Invoice posted successfully!\nFBR Invoice #: {invoiceNumber}",
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
             }
             else
             {
@@ -769,7 +789,7 @@ public class GenerateInvoiceForm : Form
                 extraTax = "",
                 fedPayable = 0.00m,
                 discount = 0.00m,
-                saleType = "Goods at standard rate (default)",
+                saleType = row.Cells["saleType"].Value?.ToString() ?? "Goods at standard rate",
                 sroItemSerialNo = "",
                 notes = row.Cells["Notes"].Value?.ToString()
             });
@@ -910,6 +930,10 @@ public class GenerateInvoiceForm : Form
                 decimal.TryParse(row.Cells["FurtherTaxAmount"].Value?.ToString(), out furtherTax);
                 decimal ratee = 0;
                 decimal.TryParse(row.Cells["Rate"].Value?.ToString().Replace("%", "").Trim(), out ratee);
+                // ✅ Get Sale Type from the grid or dropdown
+                string saleType = row.Cells["saleType"]?.Value?.ToString();
+                if (string.IsNullOrEmpty(saleType))
+                    saleType = cmbSaleType.Text; // fallback to current dropdown selection
                 DatabaseHelper.AddInvoiceItem(
                     invoiceId,
                     productId,
@@ -926,7 +950,7 @@ public class GenerateInvoiceForm : Form
                     furtherTax: furtherTax,
                     fedPayable: 0,
                     discount: 0,
-                    saleType: "Goods at standard rate",
+                    saleType: saleType,
                     sroItemSerialNo: ""
                 );
             }
@@ -1021,6 +1045,10 @@ public class GenerateInvoiceForm : Form
                 decimal.TryParse(row.Cells["FurtherTaxAmount"].Value?.ToString(), out furtherTax);
                 decimal rateee = 0;
                 decimal.TryParse(row.Cells["Rate"].Value?.ToString().Replace("%", "").Trim(), out rateee);
+                // ✅ Get Sale Type from the grid or dropdown
+                string saleType = row.Cells["saleType"]?.Value?.ToString();
+                if (string.IsNullOrEmpty(saleType))
+                    saleType = cmbSaleType.Text; // fallback to current dropdown selection
                 DatabaseHelper.AddInvoiceItem(
                     invoiceId,
                     productId,
@@ -1037,13 +1065,12 @@ public class GenerateInvoiceForm : Form
                     furtherTax: furtherTax,
                     fedPayable: 0,
                     discount: 0,
-                    saleType: "Goods at standard rate",
+                    saleType: saleType,
                     sroItemSerialNo: ""
                 );
             }
 
-            MessageBox.Show($"✅ Invoice posted successfully!\nFBR Invoice #: {fbrInvoiceNo}\nInvoice ID: {invoiceId}",
-                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"✅ Invoice posted successfully!");
 
             dgvItems.Rows.Clear();
             ClearFields();

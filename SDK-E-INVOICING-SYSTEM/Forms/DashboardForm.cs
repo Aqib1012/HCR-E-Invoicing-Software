@@ -16,7 +16,7 @@ namespace SDK_E_INVOICING_SYSTEM
 
         public DashboardForm()
         {
-            this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
+            
 
             // ===== Form Settings =====
             this.Text = "Sidekick e-Invoice - Dashboard";

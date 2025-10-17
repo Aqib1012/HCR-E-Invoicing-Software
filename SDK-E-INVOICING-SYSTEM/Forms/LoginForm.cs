@@ -19,9 +19,8 @@ namespace InvoiceApp
 
         public LoginForm()
         {
-            this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
-            InitializeUI();
 
+            InitializeUI();
         }
 
         private void InitializeUI()
@@ -378,9 +377,6 @@ namespace InvoiceApp
                 return false;
             }
         }
-
-
-
 
     }
 }

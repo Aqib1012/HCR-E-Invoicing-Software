@@ -7,7 +7,14 @@ namespace SDK_E_INVOICING_SYSTEM.Data
 {
     public static class DatabaseHelper
     {
-        public static readonly string ConnectionString = "Data Source=einvoice.db;Version=3;";
+        //public static readonly string ConnectionString = "Data Source=einvoice.db;Version=3;";
+
+        public static readonly string ConnectionString =
+    $"Data Source={System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "einvoice.db")};Version=3;";
+
+
+        
+
 
         /// <summary>
         /// Call this once at application startup to ensure DB + tables exist.

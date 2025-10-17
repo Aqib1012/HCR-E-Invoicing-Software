@@ -25,7 +25,6 @@ public class InvoicePreviewForm : Form
 
     public InvoicePreviewForm(int invoiceId)
     {
-        this.Icon = new Icon(@"C:\Users\PC\source\repos\SDK-E-INVOICING-SYSTEM\SDK-E-INVOICING-SYSTEM\Resources\icon-256x256.ico");
         this.invoiceId = invoiceId;
         this.Text = "Invoice Preview";
         this.Width = 950;
@@ -85,9 +84,42 @@ public class InvoicePreviewForm : Form
             BackColor = Color.White,
             BorderStyle = BorderStyle.None,
             Location = new Point((this.ClientSize.Width - 794) / 2, 70),
-            Padding = new Padding(30)
+            // Padding = new Padding(30)
+            Padding = new Padding(50, 20, 30, 30) // extra left padding for vertical text
+
         };
         this.Controls.Add(pnlInvoice);
+        // ===== VERTICAL INVOICE TEXT =====
+        Label lblVerticalInvoice = new Label
+        {
+            Font = new Font("Segoe UI", 27, FontStyle.Bold),
+            ForeColor = Color.FromArgb(30, 60, 114),
+            AutoSize = false,
+            Width = 40,
+            Height = 300,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Location = new Point(0, 200),
+            BackColor = Color.Transparent
+        };
+
+        lblVerticalInvoice.Paint += (s, e) =>
+        {
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.TranslateTransform(0, lblVerticalInvoice.Height);
+            e.Graphics.RotateTransform(-90);
+
+            using (SolidBrush brush = new SolidBrush(lblVerticalInvoice.ForeColor))
+            {
+                e.Graphics.DrawString("INVOICE", lblVerticalInvoice.Font, brush, 0, 0);
+            }
+
+            e.Graphics.ResetTransform();
+        };
+
+
+        pnlInvoice.Controls.Add(lblVerticalInvoice);
+        lblVerticalInvoice.BringToFront();
+
 
         TableLayoutPanel mainPanel = new TableLayoutPanel
         {
@@ -118,7 +150,7 @@ public class InvoicePreviewForm : Form
         headerTable.Controls.Add(leftHeader, 0, 0);
 
         FlowLayoutPanel rightHeader = new FlowLayoutPanel { FlowDirection = FlowDirection.LeftToRight, AutoSize = true, RightToLeft = RightToLeft.Yes };
-        fbrLogo = new PictureBox { SizeMode = PictureBoxSizeMode.Zoom, Width = 90, Height = 60 };
+        fbrLogo = new PictureBox { SizeMode = PictureBoxSizeMode.Zoom, Width =100, Height = 100 };
         qrBox = new PictureBox { SizeMode = PictureBoxSizeMode.Zoom, Width = 100, Height = 100 };
         rightHeader.Controls.Add(fbrLogo);
         rightHeader.Controls.Add(qrBox);
@@ -285,7 +317,7 @@ public class InvoicePreviewForm : Form
 
         try
         {
-            string fbrPath = Path.Combine(Application.StartupPath, "fbr_logo2.PNG");
+            string fbrPath = Path.Combine(Application.StartupPath, "FBR_DIGITAL.PNG");
             if (File.Exists(fbrPath))
                 fbrLogo.Image = Image.FromFile(fbrPath);
         }
