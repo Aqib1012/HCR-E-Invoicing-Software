@@ -27,7 +27,7 @@ public class InvoicePreviewForm : Form
     {
         this.invoiceId = invoiceId;
         this.Text = "Invoice Preview";
-        this.Width = 950;
+        this.Width = 1200;
         this.Height = 900;
         this.StartPosition = FormStartPosition.CenterScreen;
         this.BackColor = Color.FromArgb(245, 247, 250);
@@ -76,18 +76,18 @@ public class InvoicePreviewForm : Form
         this.Controls.Add(btnPdf);
 
         // ===== PANEL FOR INVOICE =====
+        // ✅ Wider layout (avoids column compression / hidden text)
         pnlInvoice = new Panel
         {
             Name = "pnlInvoice",
-            Width = 794,
-            Height = 1123,
+            Width = 920,  // ⬅️ previously 794 → now 920 (slightly wider than A4)
+            Height = 1220,
             BackColor = Color.White,
             BorderStyle = BorderStyle.None,
-            Location = new Point((this.ClientSize.Width - 794) / 2, 70),
-            // Padding = new Padding(30)
-            Padding = new Padding(50, 20, 30, 30) // extra left padding for vertical text
-
+            Location = new Point((this.ClientSize.Width - 920) / 2, 70),
+            Padding = new Padding(40, 20, 40, 30)
         };
+
         this.Controls.Add(pnlInvoice);
         // ===== VERTICAL INVOICE TEXT =====
         Label lblVerticalInvoice = new Label
@@ -215,43 +215,77 @@ public class InvoicePreviewForm : Form
         infoPanel.Controls.Add(sellerBox, 0, 0);
         infoPanel.Controls.Add(buyerBox, 1, 0);
         mainPanel.Controls.Add(infoPanel);
-
         // ===== DATAGRIDVIEW =====
         dgvItems = new DataGridView
         {
             Dock = DockStyle.Top,
             ReadOnly = true,
             BackgroundColor = Color.White,
-            BorderStyle = BorderStyle.FixedSingle,
+            BorderStyle = BorderStyle.None,
             RowHeadersVisible = false,
             AllowUserToAddRows = false,
-            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells,
-            GridColor = Color.White,
-            ColumnHeadersHeight = 70,
+            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells, // auto height
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill, // 👈 fill width
+            GridColor = Color.LightGray,
             EnableHeadersVisualStyles = false,
-            Height = 280,
+            ScrollBars = ScrollBars.None, // ❌ No scrollbars
             SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            ColumnHeadersHeight = 60
         };
-        dgvItems.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+
+        // ===== HEADER STYLE =====
+        dgvItems.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10.5f);
         dgvItems.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-        dgvItems.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
+        dgvItems.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
         dgvItems.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
-        dgvItems.DefaultCellStyle.Font = new Font("Segoe UI", 9.5f);
-        dgvItems.DefaultCellStyle.Padding = new Padding(4, 2, 4, 2);
-        dgvItems.DefaultCellStyle.SelectionBackColor = Color.LightBlue;
+
+        // ===== CELL STYLE =====
+        dgvItems.DefaultCellStyle.Font = new Font("Segoe UI", 10f);
+        dgvItems.DefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
+        dgvItems.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+        dgvItems.DefaultCellStyle.BackColor = Color.White;
+        dgvItems.DefaultCellStyle.SelectionBackColor = Color.White;
         dgvItems.DefaultCellStyle.SelectionForeColor = Color.Black;
-        dgvItems.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(240, 248, 255);
+        dgvItems.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
 
+        // ===== COLUMNS =====
         dgvItems.Columns.Add("hsCode", "Item Code");
-        dgvItems.Columns.Add("unitPrice", "Unit Price");
-        dgvItems.Columns.Add("quantity", "Qty");
-        dgvItems.Columns.Add("TotalEx", "Amount (Excl. S.Tax)");
-        dgvItems.Columns.Add("rate", "Sales Tax %");
-        dgvItems.Columns.Add("TaxValue", "Sales Tax Value");
-        dgvItems.Columns.Add("TotalInc", "Amount (Incl. S.Tax)");
 
+        var descCol = new DataGridViewTextBoxColumn
+        {
+            Name = "productDescription",
+            HeaderText = "Item Description",
+            FillWeight = 230, // 👈 wider description
+            DefaultCellStyle = new DataGridViewCellStyle
+            {
+                WrapMode = DataGridViewTriState.True,
+                Alignment = DataGridViewContentAlignment.TopLeft
+            }
+        };
+        dgvItems.Columns.Add(descCol);
+
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "unitPrice", HeaderText = "Unit Price", FillWeight = 90 });
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "quantity", HeaderText = "Qty", FillWeight = 60 });
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TotalEx", HeaderText = "Amount (Excl. S.Tax)", FillWeight = 120 });
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "rate", HeaderText = "Sales Tax %", FillWeight = 80 });
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TaxValue", HeaderText = "Sales Tax Value", FillWeight = 130 });
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TotalInc", HeaderText = "Amount (Incl. S.Tax)", FillWeight = 140 });
+
+        // ===== ALIGNMENT =====
+        foreach (DataGridViewColumn col in dgvItems.Columns)
+            col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+        dgvItems.Columns["productDescription"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.TopLeft;
+        dgvItems.Columns["hsCode"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+        // ===== ADD TO MAIN PANEL =====
         mainPanel.Controls.Add(dgvItems);
+
+
+
+
+
+
 
         // ===== TOTALS =====
         var totalsPanel = new TableLayoutPanel { Dock = DockStyle.Top, ColumnCount = 2, AutoSize = true, Padding = new Padding(0, 15, 20, 10) };
@@ -340,6 +374,10 @@ public class InvoicePreviewForm : Form
             decimal qty = Convert.ToDecimal(row["quantity"]);
             decimal unitPrice = Convert.ToDecimal(row["unitPrice"]);
             decimal rate = row.Table.Columns.Contains("rate") && row["rate"] != DBNull.Value ? Convert.ToDecimal(row["rate"]) : 0;
+            // 🟢 Decide which description to use (custom or product)
+            string description = row["description"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["description"].ToString())
+                ? row["description"].ToString()
+                : row["productDescription"].ToString();
 
             decimal totalEx = qty * unitPrice;
             decimal taxValue = totalEx * rate / 100;
@@ -351,6 +389,7 @@ public class InvoicePreviewForm : Form
 
             dgvItems.Rows.Add(
                 row["hsCode"],
+                description,
                 unitPrice,
                 qty,
                 totalEx,
