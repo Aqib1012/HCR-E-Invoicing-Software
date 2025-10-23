@@ -92,11 +92,11 @@ public class InvoicePreviewForm : Form
         // ===== VERTICAL INVOICE TEXT =====
         Label lblVerticalInvoice = new Label
         {
-            Font = new Font("Segoe UI", 27, FontStyle.Bold),
+            Font = new Font("Segoe UI", 20, FontStyle.Bold),
             ForeColor = Color.FromArgb(30, 60, 114),
             AutoSize = false,
-            Width = 40,
-            Height = 300,
+            Width = 28,
+            Height = 330,
             TextAlign = ContentAlignment.MiddleCenter,
             Location = new Point(0, 200),
             BackColor = Color.Transparent
@@ -110,7 +110,7 @@ public class InvoicePreviewForm : Form
 
             using (SolidBrush brush = new SolidBrush(lblVerticalInvoice.ForeColor))
             {
-                e.Graphics.DrawString("INVOICE", lblVerticalInvoice.Font, brush, 0, 0);
+                e.Graphics.DrawString("SALES TAX INVOICE", lblVerticalInvoice.Font, brush, 0, 0);
             }
 
             e.Graphics.ResetTransform();
@@ -159,7 +159,7 @@ public class InvoicePreviewForm : Form
         mainPanel.Controls.Add(headerTable);
         mainPanel.Controls.Add(new Label { Height = 2, Dock = DockStyle.Top, BackColor = Color.LightGray });
 
-        // ===== SELLER / BUYER INFO =====
+        // ===== SELLER / BUYER INFO PANEL =====
         var infoPanel = new TableLayoutPanel
         {
             Dock = DockStyle.Top,
@@ -178,18 +178,26 @@ public class InvoicePreviewForm : Form
             Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Padding = new Padding(10),
             ForeColor = Color.FromArgb(30, 60, 114),
-            Height = 120
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink
         };
 
-        // Label with AutoSize false and Dock Fill
         lblSellerInfo = new Label
         {
-            AutoSize = false,
-            Dock = DockStyle.Fill,
+            AutoSize = true,
             Font = new Font("Segoe UI", 9.5f),
+            MaximumSize = new Size(350, 0), // width fixed, height auto
             TextAlign = ContentAlignment.TopLeft
         };
-        sellerBox.Controls.Add(lblSellerInfo);
+
+        Panel pnlSeller = new Panel
+        {
+            AutoSize = true,                       // ✅ Panel auto-grows with content
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Fill
+        };
+        pnlSeller.Controls.Add(lblSellerInfo);
+        sellerBox.Controls.Add(pnlSeller);
 
         // ===== Buyer Box =====
         var buyerBox = new GroupBox
@@ -199,22 +207,35 @@ public class InvoicePreviewForm : Form
             Font = new Font("Segoe UI", 10, FontStyle.Bold),
             Padding = new Padding(10),
             ForeColor = Color.FromArgb(30, 60, 114),
-            Height = 120
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink
         };
 
         lblCustomerInfo = new Label
         {
-            AutoSize = false,
-            Dock = DockStyle.Fill,
+            AutoSize = true,
             Font = new Font("Segoe UI", 9.5f),
+            MaximumSize = new Size(350, 0), // width fixed, height auto
             TextAlign = ContentAlignment.TopLeft
         };
-        buyerBox.Controls.Add(lblCustomerInfo);
+
+        Panel pnlBuyer = new Panel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Fill
+        };
+        pnlBuyer.Controls.Add(lblCustomerInfo);
+        buyerBox.Controls.Add(pnlBuyer);
 
         // Add to info panel
         infoPanel.Controls.Add(sellerBox, 0, 0);
         infoPanel.Controls.Add(buyerBox, 1, 0);
+
+        // Add info panel to main panel
         mainPanel.Controls.Add(infoPanel);
+
+
         // ===== DATAGRIDVIEW =====
         dgvItems = new DataGridView
         {
@@ -266,7 +287,7 @@ public class InvoicePreviewForm : Form
 
         dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "unitPrice", HeaderText = "Unit Price", FillWeight = 90 });
         dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "quantity", HeaderText = "Qty", FillWeight = 60 });
-        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TotalEx", HeaderText = "Amount (Excl. S.Tax)", FillWeight = 120 });
+        dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TotalEx", HeaderText = "Amount (Excl. S.Tax)", FillWeight = 130 });
         dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "rate", HeaderText = "Sales Tax %", FillWeight = 80 });
         dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TaxValue", HeaderText = "Sales Tax Value", FillWeight = 130 });
         dgvItems.Columns.Add(new DataGridViewTextBoxColumn { Name = "TotalInc", HeaderText = "Amount (Incl. S.Tax)", FillWeight = 140 });

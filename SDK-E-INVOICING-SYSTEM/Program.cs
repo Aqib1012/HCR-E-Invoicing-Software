@@ -24,10 +24,10 @@ namespace Sidekick_eInvoice
                 return;
             }
 
-             //Application.Run(new LoginForm());
+             Application.Run(new LoginForm());
             //Application.Run(new GenerateInvoiceForm());
             //Application.Run(new DashboardForm());
-            Application.Run(new InvoiceViewerForm());
+           // Application.Run(new InvoiceViewerForm());
 
         }
     }

@@ -170,6 +170,13 @@ public class GenerateInvoiceForm : Form
         cmbScenario.Items.Add("SN007");
         cmbScenario.Items.Add("SN008");
         cmbScenario.Items.Add("SN009");
+        cmbScenario.Items.Add("SN015");
+        cmbScenario.Items.Add("SN016");
+        cmbScenario.Items.Add("SN017");
+        cmbScenario.Items.Add("SN018");
+        cmbScenario.Items.Add("SN019");
+        cmbScenario.Items.Add("SN020");
+
         cmbScenario.SelectedIndex = 0;
 
         txtQuantity = CreateTextBox();
@@ -1102,14 +1109,36 @@ public class GenerateInvoiceForm : Form
         decimal totalValue = qty * unitPrice;
         txtTotalValue.Text = totalValue.ToString("N2");
 
-        // 2️⃣ ValueExclGST = Total / (1 + Rate/100)
-        decimal valueExclGST = qty * unitPrice ;
-        txtValueExclGST.Text = valueExclGST.ToString("N2");
+        // 2️⃣ Scenario Code ke hisaab se Sales Tax calculate karo
+        string scenarioCode = cmbScenario.SelectedItem?.ToString() ?? "DEFAULT";
+        decimal salesTax = 0;
+        decimal valueExclGST = totalValue;
 
-        // 3️⃣ Sales Tax = Total - ValueExclGST
-        decimal salesTax = totalValue / 100 * 18;
+        switch (scenarioCode)
+        {
+            case "SN001": // Scenario 1: Standard Product (Rate from product)
+                          // Inclusive nahi, simple % tax
+                salesTax = totalValue * rate / 100;
+                valueExclGST = totalValue;
+                break;
+
+            case "SN002": // Scenario 2: Services (Rate from product)
+                          // Agar inclusive GST ho to:
+                valueExclGST = totalValue / (1 + rate / 100);
+                salesTax = totalValue - valueExclGST;
+                break;
+
+            default: // Fallback
+                salesTax = totalValue * rate / 100;
+                valueExclGST = totalValue;
+                break;
+        }
+
+        // 3️⃣ Textboxes update karo
+        txtValueExclGST.Text = valueExclGST.ToString("N2");
         txtSalesTaxAmount.Text = salesTax.ToString("N2");
     }
+
 
 
 
