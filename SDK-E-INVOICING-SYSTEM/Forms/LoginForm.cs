@@ -63,16 +63,16 @@ namespace InvoiceApp
             // =====================
             // Brand Text
             // =====================
-            lblBrand = new Label()
+            var picLogo = new PictureBox()
             {
-                Text = "SIDEKICK",
-                Font = new Font("Segoe UI", 22, FontStyle.Bold),
-                ForeColor = Color.White,
+                Image = Image.FromFile("Logo@200-white.png"), // ✅ replace with your logo file name
+                SizeMode = PictureBoxSizeMode.CenterImage,
                 Dock = DockStyle.Top,
-                Height = 50,
-                TextAlign = ContentAlignment.MiddleCenter
+                Height = 80,
+                BackColor = Color.Transparent,
+                Margin = new Padding(0, 10, 0, 10)
             };
-            leftPanel.Controls.Add(lblBrand);
+            leftPanel.Controls.Add(picLogo);
 
             // =====================
             // Tagline
@@ -113,7 +113,7 @@ namespace InvoiceApp
             // =====================
             var lblDev = new Label()
             {
-                Text = "© 2025 | Developed by Sidekick",
+                Text = "Developed by Sidekick | © 2025",
                 Font = new Font("Segoe UI", 9, FontStyle.Regular),
                 ForeColor = Color.White,
                 Dock = DockStyle.Bottom,
@@ -284,12 +284,19 @@ namespace InvoiceApp
                 txtPassword.Clear();
                 txtPassword.ForeColor = Color.Black;
                 isPassPlaceholder = false;
+                txtPassword.UseSystemPasswordChar = false; // still plain at first
+            }
 
-                // ✅ sirf tab enable karo jab asli password likhna ho
-                if (!string.IsNullOrEmpty(txtPassword.Text))
-                {
-                    txtPassword.UseSystemPasswordChar = true;
-                }
+            // ✅ Enable masking only after first key press
+            txtPassword.TextChanged -= TxtPassword_TextChanged; // avoid double attach
+            txtPassword.TextChanged += TxtPassword_TextChanged;
+        }
+        private void TxtPassword_TextChanged(object sender, EventArgs e)
+        {
+            if (!isPassPlaceholder && txtPassword.Text.Length > 0)
+            {
+                txtPassword.UseSystemPasswordChar = true;
+                txtPassword.TextChanged -= TxtPassword_TextChanged; // disable after done
             }
         }
 

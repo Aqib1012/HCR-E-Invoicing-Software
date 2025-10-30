@@ -170,12 +170,25 @@ public class GenerateInvoiceForm : Form
         cmbScenario.Items.Add("SN007");
         cmbScenario.Items.Add("SN008");
         cmbScenario.Items.Add("SN009");
+        cmbScenario.Items.Add("SN010");
+        cmbScenario.Items.Add("SN011");
+        cmbScenario.Items.Add("SN012");
+        cmbScenario.Items.Add("SN013");
+        cmbScenario.Items.Add("SN014");
         cmbScenario.Items.Add("SN015");
         cmbScenario.Items.Add("SN016");
         cmbScenario.Items.Add("SN017");
         cmbScenario.Items.Add("SN018");
         cmbScenario.Items.Add("SN019");
         cmbScenario.Items.Add("SN020");
+        cmbScenario.Items.Add("SN021");
+        cmbScenario.Items.Add("SN022");
+        cmbScenario.Items.Add("SN023");
+        cmbScenario.Items.Add("SN024");
+        cmbScenario.Items.Add("SN025");
+        cmbScenario.Items.Add("SN026");
+        cmbScenario.Items.Add("SN027");
+        cmbScenario.Items.Add("SN028");
 
         cmbScenario.SelectedIndex = 0;
 

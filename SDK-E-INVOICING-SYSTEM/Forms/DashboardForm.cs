@@ -38,10 +38,11 @@ namespace SDK_E_INVOICING_SYSTEM
             // ===== FBR Logo (Top of Sidebar) =====
             PictureBox fbrLogo = new PictureBox()
             {
-                Image = Image.FromFile("fbr_logo2.PNG"),
-                SizeMode = PictureBoxSizeMode.Zoom,
-                Size = new Size(180, 90),
-                Location = new Point(25, 20),
+                // Image = Image.FromFile("fbr_logo2.PNG"),
+                Image = Image.FromFile("Logo@200-white.png"),
+                SizeMode = PictureBoxSizeMode.CenterImage,
+                Size = new Size(200, 90),
+                Location = new Point(10, 20),
                 BackColor = Color.Transparent
             };
             sidebar.Controls.Add(fbrLogo);
@@ -85,14 +86,19 @@ namespace SDK_E_INVOICING_SYSTEM
             // ===== Bottom Logo =====
             PictureBox logoBox = new PictureBox()
             {
-                Image = Image.FromFile("Logo@200-white.png"),
-                Size = new Size(180, 60),
+                Image = Image.FromFile("fbr_logo2.PNG"),
                 Dock = DockStyle.Bottom,
+                Height = 80,
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand,
-                Margin = new Padding(0, 20, 0, 20)
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Margin = new Padding(0, 5, 0, 10)
             };
             sidebar.Controls.Add(logoBox);
+            sidebar.Controls.SetChildIndex(logoBox, 0); // ensure it's at bottom
+
+
+        
 
             // ===== Main Panel =====
             mainPanel = new Panel()

@@ -12,7 +12,7 @@ using System.Windows.Forms;
 public class InvoicePreviewForm : Form
 {
     private int invoiceId;
-
+    private Label lblFurtherTax;
     private Label lblInvoiceNumber, lblFbrNumber, lblDate, lblStatus;
     private Label lblSubTotal, lblTax, lblGrandTotal;
     private Label lblSellerInfo, lblCustomerInfo;
@@ -329,23 +329,33 @@ public class InvoicePreviewForm : Form
         totalsPanel.Controls.Add(lblSubTotal = MakeRightLabel("0.00"));
         totalsPanel.Controls.Add(MakeRightLabel("Sales Tax:"));
         totalsPanel.Controls.Add(lblTax = MakeRightLabel("0.00"));
+        totalsPanel.Controls.Add(MakeRightLabel("Further Tax:"));
+        totalsPanel.Controls.Add(lblFurtherTax = MakeRightLabel("0.00"));
         totalsPanel.Controls.Add(MakeRightLabel("Total Due:", true));
         totalsPanel.Controls.Add(lblGrandTotal = MakeRightLabel("0.00", true));
 
         mainPanel.Controls.Add(totalsPanel);
 
-        // ===== FOOTER =====
-        var footerLabel = new Label
+        // ===== MODERN FOOTER =====
+        Panel footerPanel = new Panel
         {
-            Text = "First Floor, Randhawa Plaza, AKM Fazl-ul-Haq Rd, behind Kulsum International Hospital, G 6/2 Blue Area, Islamabad, 44000\n" +
-                   "Tel: +923000228444, • Website: www.sidekick.pk",
-            Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
-            TextAlign = ContentAlignment.MiddleCenter,
             Dock = DockStyle.Bottom,
-            ForeColor = Color.Gray,
-            Height = 50
+            Height = 60,
+            BackColor = Color.Transparent
         };
-        mainPanel.Controls.Add(footerLabel);
+
+        Label footerText = new Label
+        {
+            Text = "Sidekick © 2025  |  Powered by Sidekick \ninfo@sidekick.pk  •  +92 300 0228444  •  www.sidekick.pk",
+            Font = new Font("Segoe UI", 8.8f, FontStyle.Regular),
+            ForeColor = Color.FromArgb(120, 120, 120),
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter
+        };
+
+        footerPanel.Controls.Add(footerText);
+        mainPanel.Controls.Add(footerPanel);
+
     }
 
     private void LoadInvoiceData()
@@ -388,7 +398,7 @@ public class InvoicePreviewForm : Form
 
         DataTable items = ds.Tables["InvoiceItems"];
         dgvItems.Rows.Clear();
-        decimal subTotal = 0, totalTax = 0, grandTotal = 0;
+        decimal subTotal = 0, totalTax = 0, furtherTax = 0, grandTotal = 0;
 
         foreach (DataRow row in items.Rows)
         {
@@ -399,13 +409,17 @@ public class InvoicePreviewForm : Form
             string description = row["description"] != DBNull.Value && !string.IsNullOrWhiteSpace(row["description"].ToString())
                 ? row["description"].ToString()
                 : row["productDescription"].ToString();
-
+            // ✅ Further Tax column check (if available in DB)
+            decimal further = row.Table.Columns.Contains("furtherTax") && row["furtherTax"] != DBNull.Value
+                ? Convert.ToDecimal(row["furtherTax"])
+                : 0;
             decimal totalEx = qty * unitPrice;
             decimal taxValue = totalEx * rate / 100;
             decimal totalInc = totalEx + taxValue;
 
             subTotal += totalEx;
             totalTax += taxValue;
+            furtherTax += further;
             grandTotal += totalInc;
 
             dgvItems.Rows.Add(
@@ -422,7 +436,8 @@ public class InvoicePreviewForm : Form
 
         lblSubTotal.Text = $"{subTotal:N2}";
         lblTax.Text = $"{totalTax:N2}";
-        lblGrandTotal.Text = $"{grandTotal:N2}";
+        lblFurtherTax.Text = $"{furtherTax:N2}";
+        lblGrandTotal.Text = $"{grandTotal+furtherTax:N2}";
 
         string fbrInvoiceNo = header["fbrInvoiceNumber"]?.ToString();
         if (!string.IsNullOrEmpty(fbrInvoiceNo))

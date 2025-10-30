@@ -81,7 +81,7 @@ public class ProductForm : Form
 
         var lblHsCode = new Label { Text = "HS Code *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
         var lblDesc = new Label { Text = "Product Description *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
-        var lblRate = new Label { Text = "Rate (e.g. 20%) *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
+        var lblRate = new Label { Text = "Sales Tax Rate (e.g. 20%) *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
         var lblUoM = new Label { Text = "Unit of Measure *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
 
         txtHsCode = new TextBox { Font = new Font("Segoe UI", 11), Dock = DockStyle.Fill };
