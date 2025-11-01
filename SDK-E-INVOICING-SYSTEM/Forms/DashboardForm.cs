@@ -179,12 +179,55 @@ namespace SDK_E_INVOICING_SYSTEM
 
             // ===== Button Events =====
             btnDashboard.Click += (s, e) => SetActiveButton(btnDashboard, "You are already on Dashboard");
-            btnCustomers.Click += (s, e) => { SetActiveButton(btnCustomers); new CustomerForm().ShowDialog(); };
-            btnProducts.Click += (s, e) => { SetActiveButton(btnProducts); new ProductForm().ShowDialog(); };
-            btnInvoice.Click += (s, e) => { SetActiveButton(btnInvoice); new GenerateInvoiceForm().ShowDialog(); };
-            btnViewInvoices.Click += (s, e) => { SetActiveButton(btnViewInvoices); new InvoiceViewerForm().ShowDialog(); };
-            btnSeller.Click += (s, e) => { SetActiveButton(btnSeller); new SellerForm().ShowDialog(); };
-            btnPayments.Click += (s, e) => { SetActiveButton(btnPayments); new PaymentForm().ShowDialog(); };
+            btnCustomers.Click += (s, e) =>
+            {
+                SetActiveButton(btnCustomers);
+                this.Hide();
+                var form = new CustomerForm();
+                form.FormClosed += (sender2, args) => this.Show(); // reopen dashboard when closed
+                form.Show();
+            };
+            btnProducts.Click += (s, e) =>
+            {
+                SetActiveButton(btnProducts);
+                this.Hide();
+                var form = new ProductForm();
+                form.FormClosed += (sender2, args) => this.Show();
+                form.Show();
+            };
+            btnInvoice.Click += (s, e) =>
+            {
+                SetActiveButton(btnInvoice);
+                this.Hide();
+                var form = new GenerateInvoiceForm();
+                form.FormClosed += (sender2, args) => this.Show();
+                form.Show();
+            };
+            btnViewInvoices.Click += (s, e) =>
+            {
+                SetActiveButton(btnViewInvoices);
+                this.Hide();
+                var form = new InvoiceViewerForm();
+                form.FormClosed += (sender2, args) => this.Show();
+                form.Show();
+            };
+
+            btnSeller.Click += (s, e) =>
+            {
+                SetActiveButton(btnSeller);
+                this.Hide();
+                var form = new SellerForm();
+                form.FormClosed += (sender2, args) => this.Show();
+                form.Show();
+            };
+            btnPayments.Click += (s, e) =>
+            {
+                SetActiveButton(btnPayments);
+                this.Hide();
+                var form = new PaymentForm();
+                form.FormClosed += (sender2, args) => this.Show();
+                form.Show();
+            };
             btnLogout.Click += (s, e) =>
             {
                 new LoginForm().Show();

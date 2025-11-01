@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SDK_E_INVOICING_SYSTEM;
 using SDK_E_INVOICING_SYSTEM.Data;
 using System;
 using System.Collections.Generic;
@@ -730,6 +731,7 @@ public class GenerateInvoiceForm : Form
             {
 
                 PostAndSave(invoiceNumber);
+
                 
             }
             else
@@ -982,6 +984,8 @@ public class GenerateInvoiceForm : Form
             ClearFields();
             UpdateSubtotal();
             txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
+            this.Hide();
+            new DashboardForm().Show();
         }
         catch (Exception ex)
         {
@@ -1096,6 +1100,8 @@ public class GenerateInvoiceForm : Form
             ClearFields();
             UpdateSubtotal();
             txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
+            this.Hide();
+            new DashboardForm().Show();
         }
         catch (Exception ex)
         {
