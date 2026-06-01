@@ -4,6 +4,7 @@ using System;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Windows.Forms;
+using System.IO;
 
 namespace InvoiceApp
 {
@@ -63,9 +64,24 @@ namespace InvoiceApp
             // =====================
             // Brand Text
             // =====================
+            // Load logo safely (do not throw if file missing)
+            Image logoImage = null;
+            try
+            {
+                string logoFile = Path.Combine(Application.StartupPath, "Logo@200-white.png");
+                if (File.Exists(logoFile))
+                {
+                    logoImage = Image.FromFile(logoFile);
+                }
+            }
+            catch
+            {
+                // ignore image load errors
+            }
+
             var picLogo = new PictureBox()
             {
-                Image = Image.FromFile("Logo@200-white.png"), // ✅ replace with your logo file name
+                Image = logoImage, // may be null
                 SizeMode = PictureBoxSizeMode.CenterImage,
                 Dock = DockStyle.Top,
                 Height = 80,

@@ -4,6 +4,7 @@ using System;
 using System.Data.SQLite;
 using System.Drawing;
 using System.Windows.Forms;
+using System.IO;
 
 namespace SDK_E_INVOICING_SYSTEM
 {
@@ -39,13 +40,37 @@ namespace SDK_E_INVOICING_SYSTEM
             PictureBox fbrLogo = new PictureBox()
             {
                 // Image = Image.FromFile("fbr_logo2.PNG"),
-                Image = Image.FromFile("Logo@200-white.png"),
+                Image = LoadImageSafely("Logo@200-white.png"),
                 SizeMode = PictureBoxSizeMode.CenterImage,
                 Size = new Size(200, 90),
                 Location = new Point(10, 20),
                 BackColor = Color.Transparent
             };
             sidebar.Controls.Add(fbrLogo);
+
+            // ===== LIVE badge under Sidekick logo =====
+            Panel liveBadge = new Panel()
+            {
+                Size = new Size(70, 26),
+                BackColor = Color.FromArgb(220, 53, 69), // Bootstrap-like danger color
+                Cursor = Cursors.Default,
+                Location = new Point(fbrLogo.Left + (fbrLogo.Width - 70) / 2, fbrLogo.Bottom + 8)
+            };
+            // Rounded corners for the badge
+            liveBadge.Region = Region.FromHrgn(CreateRoundRectRgn(0, 0, liveBadge.Width, liveBadge.Height, 14, 14));
+
+            Label lblLive = new Label()
+            {
+                Text = "LIVE",
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Transparent,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            liveBadge.Controls.Add(lblLive);
+            sidebar.Controls.Add(liveBadge);
 
             // ===== Sidebar Buttons =====
             FlowLayoutPanel buttonPanel = new FlowLayoutPanel()
@@ -86,7 +111,7 @@ namespace SDK_E_INVOICING_SYSTEM
             // ===== Bottom Logo =====
             PictureBox logoBox = new PictureBox()
             {
-                Image = Image.FromFile("fbr_logo2.PNG"),
+                Image = LoadImageSafely("fbr_logo2.PNG"),
                 Dock = DockStyle.Bottom,
                 Height = 80,
                 BackColor = Color.Transparent,
@@ -370,6 +395,27 @@ namespace SDK_E_INVOICING_SYSTEM
                 this.Hide();
                 new LoginForm().Show();
             }
+        }
+
+        // helper to load image from app folder safely
+        private Image LoadImageSafely(string fileName)
+        {
+            try
+            {
+                string path = Path.Combine(Application.StartupPath, fileName);
+                if (File.Exists(path))
+                {
+                    using (var imgTemp = Image.FromFile(path))
+                    {
+                        return new Bitmap(imgTemp);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Image load failed: " + ex.Message);
+            }
+            return null;
         }
 
         [System.Runtime.InteropServices.DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]

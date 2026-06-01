@@ -21,6 +21,8 @@ namespace SDK_E_INVOICING_SYSTEM.Models
         public decimal discount { get; set; } = 0;
         public string saleType { get; set; }
         public string sroItemSerialNo { get; set; } = "";
+
+        public string sroScheduleNo { get; set; } = "ICTO TABLE I";
     }
 
     public class InvoiceData

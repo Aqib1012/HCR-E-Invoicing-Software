@@ -81,7 +81,7 @@ public class ProductForm : Form
 
         var lblHsCode = new Label { Text = "HS Code *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
         var lblDesc = new Label { Text = "Product Description *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
-        var lblRate = new Label { Text = "Sales Tax Rate (e.g. 20%) *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
+        var lblRate = new Label { Text = "Sales Tax Rate (e.g. 20% or Exempt) *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
         var lblUoM = new Label { Text = "Unit of Measure *", Font = new Font("Segoe UI", 10, FontStyle.Bold), Dock = DockStyle.Fill, TextAlign = ContentAlignment.BottomLeft };
 
         txtHsCode = new TextBox { Font = new Font("Segoe UI", 11), Dock = DockStyle.Fill };
@@ -220,11 +220,34 @@ public class ProductForm : Form
             MessageBox.Show("Product Description is required.");
             return false;
         }
-        if (string.IsNullOrWhiteSpace(txtRate.Text) || !Regex.IsMatch(txtRate.Text.Trim(), @"^\d+(\.\d{1,2})?%$"))
+
+        // Allow 'Exempt' or numeric percentage (with or without % sign)
+        string rateText = txtRate.Text?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(rateText))
         {
-            MessageBox.Show("Rate must be a valid percentage (e.g., 20%, 18.5%).");
+            MessageBox.Show("Rate is required (or use 'Exempt').");
             return false;
         }
+
+        if (string.Equals(rateText, "Exempt", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // Remove trailing percent sign if present and parse number
+        string numericPart = rateText.EndsWith("%") ? rateText.Substring(0, rateText.Length - 1).Trim() : rateText;
+        if (!decimal.TryParse(numericPart, out decimal rateValue))
+        {
+            MessageBox.Show("Rate must be 'Exempt' or a valid percentage (e.g., 20, 20%, 18.5%).");
+            return false;
+        }
+
+        if (rateValue < 0 || rateValue > 1000) // allow large upper bound
+        {
+            MessageBox.Show("Rate value out of acceptable range.");
+            return false;
+        }
+
         return true;
     }
 
@@ -233,7 +256,8 @@ public class ProductForm : Form
         try
         {
             if (!ValidateFields()) return;
-            DatabaseHelper.AddProduct(txtHsCode.Text, txtProductDescription.Text, txtRate.Text, txtUoM.Text);
+            string normalizedRate = NormalizeRate(txtRate.Text);
+            DatabaseHelper.AddProduct(txtHsCode.Text, txtProductDescription.Text, normalizedRate, txtUoM.Text);
             LoadProducts();
             ClearFields();
             //MessageBox.Show("Product added successfully.");
@@ -250,7 +274,8 @@ public class ProductForm : Form
         {
             if (selectedProductId == -1) return;
             if (!ValidateFields()) return;
-            DatabaseHelper.UpdateProduct(selectedProductId, txtHsCode.Text, txtProductDescription.Text, txtRate.Text, txtUoM.Text);
+            string normalizedRate = NormalizeRate(txtRate.Text);
+            DatabaseHelper.UpdateProduct(selectedProductId, txtHsCode.Text, txtProductDescription.Text, normalizedRate, txtUoM.Text);
             LoadProducts();
             ClearFields();
             MessageBox.Show("Product updated successfully.");
@@ -300,5 +325,25 @@ public class ProductForm : Form
             txtRate.Text = row.Cells["rate"].Value?.ToString() ?? "";
             txtUoM.Text = row.Cells["uoM"].Value?.ToString() ?? "";
         }
+    }
+
+    // New helper: normalize rate before saving
+    private string NormalizeRate(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return input;
+        var trimmed = input.Trim();
+        if (string.Equals(trimmed, "Exempt", StringComparison.OrdinalIgnoreCase))
+            return "Exempt";
+
+        // Remove any existing % then ensure single % at end
+        var noPercent = trimmed.EndsWith("%") ? trimmed.Substring(0, trimmed.Length - 1) : trimmed;
+        // validate numeric part
+        if (decimal.TryParse(noPercent, out decimal v))
+        {
+            // remove trailing zeros when whole number
+            string formatted = v % 1 == 0 ? v.ToString("0") : v.ToString();
+            return formatted + "%";
+        }
+        return input; // fallback
     }
 }

@@ -3,6 +3,8 @@ using SDK_E_INVOICING_SYSTEM;
 using SDK_E_INVOICING_SYSTEM.Data;
 using System;
 using System.Windows.Forms;
+using SDK_E_INVOICING_SYSTEM.Helpers;
+using System.IO;
 
 namespace Sidekick_eInvoice
 {
@@ -20,14 +22,57 @@ namespace Sidekick_eInvoice
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Database initialization failed:\n" + ex.Message);
+                Logger.LogException(ex);
+                MessageBox.Show("Database initialization failed. Check log for details.", "Startup Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-             Application.Run(new LoginForm());
-            //Application.Run(new GenerateInvoiceForm());
-            //Application.Run(new DashboardForm());
-           // Application.Run(new InvoiceViewerForm());
+            try
+            {
+                // compute log path for user guidance
+                string logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+                string logFile = Path.Combine(logDir, "app.log");
+
+                Application.ThreadException += (s, e) => {
+                    try
+                    {
+                        Logger.LogException(e.Exception);
+                        MessageBox.Show($"An unexpected error occurred.\n\n{e.Exception.Message}\n\nSee log: {logFile}", "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    catch
+                    {
+                        // fallback
+                        MessageBox.Show("An unexpected error occurred.", "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
+
+                AppDomain.CurrentDomain.UnhandledException += (s, e) => {
+                    try
+                    {
+                        if (e.ExceptionObject is Exception ex)
+                        {
+                            Logger.LogException(ex);
+                            MessageBox.Show($"A fatal error occurred.\n\n{ex.Message}\n\nSee log: {logFile}", "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            Logger.LogException(new Exception("Unhandled exception object not Exception"));
+                            MessageBox.Show($"A fatal error occurred. See log: {logFile}", "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    catch
+                    {
+                        try { MessageBox.Show("A fatal error occurred.", "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error); } catch { }
+                    }
+                };
+
+                Application.Run(new LoginForm());
+            }
+            catch (Exception ex)
+            {
+                Logger.LogException(ex);
+                MessageBox.Show("Fatal error during application startup. See log for details.", "Fatal Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
         }
     }

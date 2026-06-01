@@ -1,0 +1,16 @@
+bin/
+obj/
+out/
+.vs/
+*.user
+*.suo
+*.tmp
+*.log
+packages/
+*.nupkg
+Dockerfile
+.github/
+*.db
+*.db-journal
+.idea/
+*.sln.docstates

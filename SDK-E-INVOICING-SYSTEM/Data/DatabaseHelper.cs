@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS Sellers (
                 string createProducts = @"
 CREATE TABLE IF NOT EXISTS Products (
     productId INTEGER PRIMARY KEY AUTOINCREMENT,
-    hsCode TEXT NOT NULL UNIQUE,
+    hsCode TEXT NOT NULL,
     productDescription TEXT NOT NULL,
     rate TEXT NOT NULL,
     uoM TEXT NOT NULL
@@ -135,10 +135,37 @@ CREATE TABLE IF NOT EXISTS InvoiceItems (
     discount REAL,
     saleType TEXT,
     sroItemSerialNo TEXT,
+    sroScheduleNo TEXT,
     FOREIGN KEY(invoiceId) REFERENCES Invoices(invoiceId),
     FOREIGN KEY(productId) REFERENCES Products(productId)
 );";
                 using (var cmd = new SQLiteCommand(createInvoiceItems, conn)) cmd.ExecuteNonQuery();
+
+                // Ensure 'sroScheduleNo' column exists in case DB was created before this change
+                using (var checkCmd = new SQLiteCommand("PRAGMA table_info('InvoiceItems');", conn))
+                {
+                    using (var reader = checkCmd.ExecuteReader())
+                    {
+                        bool hasSroSchedule = false;
+                        while (reader.Read())
+                        {
+                            string colName = reader[1].ToString();
+                            if (string.Equals(colName, "sroScheduleNo", StringComparison.OrdinalIgnoreCase))
+                            {
+                                hasSroSchedule = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasSroSchedule)
+                        {
+                            using (var alter = new SQLiteCommand("ALTER TABLE InvoiceItems ADD COLUMN sroScheduleNo TEXT;", conn))
+                            {
+                                alter.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
 
                 // Payments
                 string createPayments = @"
@@ -261,6 +288,25 @@ CREATE TABLE IF NOT EXISTS Payments (
                     var dt = new DataTable();
                     da.Fill(dt);
                     return dt.Rows.Count > 0 ? dt.Rows[0] : null;
+                }
+            }
+        }
+
+        // Return productId for given hsCode or -1 if not found
+        public static int GetProductIdByHsCode(string hsCode)
+        {
+            if (string.IsNullOrWhiteSpace(hsCode)) return -1;
+            using (var conn = new SQLiteConnection(ConnectionString))
+            {
+                conn.Open();
+                string sql = "SELECT productId FROM Products WHERE hsCode = @hsCode LIMIT 1";
+                using (var cmd = new SQLiteCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@hsCode", hsCode);
+                    var result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                        return Convert.ToInt32(result);
+                    return -1;
                 }
             }
         }
@@ -487,7 +533,7 @@ ORDER BY i.invoiceDate DESC";
             {
                 conn.Open();
                 string sql = @"
-SELECT ii.itemId, p.productId, p.hsCode, p.productDescription, ii.description, ii.quantity, ii.rate, ii.unitPrice, ii.totalValues, ii.salesTaxApplicable, ii.furtherTax, ii.discount
+SELECT ii.itemId, p.productId, p.hsCode, p.productDescription, ii.description, ii.quantity, ii.rate, ii.unitPrice, ii.totalValues, ii.salesTaxApplicable, ii.furtherTax, ii.discount, ii.sroItemSerialNo, ii.sroScheduleNo
 FROM InvoiceItems ii
 LEFT JOIN Products p ON ii.productId = p.productId
 WHERE ii.invoiceId = @invoiceId";
@@ -554,7 +600,8 @@ WHERE ii.invoiceId = @invoiceId";
     decimal fedPayable,
     decimal discount,
     string saleType,
-    string sroItemSerialNo)
+    string sroItemSerialNo,
+    string sroScheduleNo)
         {
             using (var conn = new SQLiteConnection(ConnectionString))
             {
@@ -563,11 +610,11 @@ WHERE ii.invoiceId = @invoiceId";
 INSERT INTO InvoiceItems 
 (invoiceId, productId, description, quantity, rate, unitPrice, totalValues, valueSalesExcludingST,
  fixedNotifiedValueOrRetailPrice, salesTaxApplicable, salesTaxWithheldAtSource, extraTax, furtherTax, 
- fedPayable, discount, saleType, sroItemSerialNo)
+ fedPayable, discount, saleType, sroItemSerialNo, sroScheduleNo)
 VALUES 
 (@invoiceId, @productId, @description, @quantity, @rate, @unitPrice, @totalValues, @valueSalesExcludingST,
  @fixedNotifiedValueOrRetailPrice, @salesTaxApplicable, @salesTaxWithheldAtSource, @extraTax, @furtherTax,
- @fedPayable, @discount, @saleType, @sroItemSerialNo);";
+ @fedPayable, @discount, @saleType, @sroItemSerialNo, @sroScheduleNo);";
 
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
@@ -587,7 +634,8 @@ VALUES
                     cmd.Parameters.AddWithValue("@fedPayable", fedPayable);
                     cmd.Parameters.AddWithValue("@discount", discount);
                     cmd.Parameters.AddWithValue("@saleType", saleType);
-                    cmd.Parameters.AddWithValue("@sroItemSerialNo", sroItemSerialNo);
+                    cmd.Parameters.AddWithValue("@sroItemSerialNo", sroItemSerialNo ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@sroScheduleNo", sroScheduleNo ?? (object)DBNull.Value);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -803,7 +851,7 @@ SELECT last_insert_rowid();";
             i.discount, 
             i.grandTotal, 
             i.notes,
-
+            i.status, 
             s.sellerBusinessName, 
             s.sellerNTNCNIC, 
             s.sellerProvince, 
@@ -839,7 +887,9 @@ SELECT last_insert_rowid();";
             ii.totalValues, 
             ii.salesTaxApplicable, 
             ii.furtherTax, 
-            ii.discount
+            ii.discount,
+            ii.sroItemSerialNo,
+            ii.sroScheduleNo
         FROM InvoiceItems ii
         LEFT JOIN Products p ON ii.productId = p.productId
         WHERE ii.invoiceId = @invoiceId";

@@ -18,11 +18,14 @@ public class GenerateInvoiceForm : Form
     private TextBox txtSellerNTN, txtSellerBusiness, txtSellerProvince, txtSellerAddress;
     private TextBox txtBuyerNTN, txtBuyerProvince, txtBuyerAddress, txtBuyerRegType;
     private TextBox txtProdDesc, txtProdRate, txtProdUOM;
+    private TextBox txtHSCode;
     private TextBox txtQuantity, txtTotalValue, txtValueExclGST;
     private TextBox txtSalesTaxAmount, txtFurtherTaxAmount, txtExtraTaxAmount;
     private TextBox txtUnitPrice;
+    private ComboBox cmbSroSchedule; // SRO schedule dropdown
+    private ComboBox cmbSroItemSerialNo; // SRO item serial no dropdown
     private TextBox txtItemNotes; // New Notes field
-    private Button btnAddItem, btnSave, btnValidateInvoice, btnPost, btnDeleteItem;
+    private Button btnAddItem, btnValidateInvoice, btnPost, btnDeleteItem;
     private DataGridView dgvItems;
     private DataTable buyers, products;
     private Label lblSubtotal;
@@ -62,7 +65,7 @@ public class GenerateInvoiceForm : Form
 
     public GenerateInvoiceForm()
     {
-        
+
         this.Text = "Generate Invoice";
         this.WindowState = FormWindowState.Maximized;
         this.BackColor = Color.WhiteSmoke;
@@ -120,7 +123,7 @@ public class GenerateInvoiceForm : Form
             {
                 DataRow row = sellers.Rows[cmbSellerName.SelectedIndex];
                 txtSellerNTN.Text = row["sellerNTNCNIC"].ToString();
-                // txtSellerBusiness.Text = row["sellerBusinessName"].ToString();
+                txtSellerBusiness.Text = row["sellerBusinessName"].ToString();
                 txtSellerProvince.Text = row["sellerProvince"].ToString();
                 txtSellerAddress.Text = row["sellerAddress"].ToString();
                 sellerToken = row["token"].ToString();
@@ -150,15 +153,17 @@ public class GenerateInvoiceForm : Form
         GroupBox gbProduct = CreateGroupBox("📦 Product Info", new Size(400, 150));
         cmbHSCode = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 220 };
         txtProdDesc = CreateTextBox("", true);
+        txtHSCode = CreateTextBox("", true);
         txtProdRate = CreateTextBox("", true);
         txtProdUOM = CreateTextBox("", true);
+        // Show product description in dropdown and HS Code in a textbox
         AddLabeledControls(gbProduct,
-            ("HS Code:", cmbHSCode), ("Description:", txtProdDesc),
+            ("Description:", cmbHSCode), ("HS Code:", txtHSCode),
             ("Tax Rate:", txtProdRate), ("UOM:", txtProdUOM));
         mainLayout.Controls.Add(gbProduct);
 
         // Invoice Item Panel
-        GroupBox gbItem = CreateGroupBox("🧾 Invoice Item", new Size(330, 300));
+        GroupBox gbItem = CreateGroupBox("🧾 Invoice Item", new Size(330, 360));
 
         cmbScenario = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
         cmbScenario.Items.Add("Select");
@@ -195,6 +200,29 @@ public class GenerateInvoiceForm : Form
 
         txtQuantity = CreateTextBox();
         txtUnitPrice = CreateTextBox();
+        // SRO schedule dropdown (empty + two options)
+        cmbSroSchedule = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+        cmbSroSchedule.Items.Add(string.Empty);
+        cmbSroSchedule.Items.Add("EIGHTH SCHEDULE Table 1");
+        cmbSroSchedule.Items.Add("6th Schd Table I");
+        cmbSroSchedule.Items.Add("327(I)/2008");
+        cmbSroSchedule.Items.Add("1450(I)/2021");
+        cmbSroSchedule.Items.Add("NINTH SCHEDULE");
+        cmbSroSchedule.Items.Add("Goods (FED in ST Mode)");
+        cmbSroSchedule.Items.Add("ICTO TABLE I");
+        cmbSroSchedule.Items.Add("ICTO TABLE II");
+        cmbSroSchedule.Items.Add("6th Schd Table III");
+        cmbSroSchedule.Items.Add("581(1)/2024");
+        cmbSroSchedule.Items.Add("297(I)/2023-Table-I");
+        
+
+        cmbSroSchedule.SelectedIndex = 0;
+
+        // SRO item serial no dropdown (1..100)
+        cmbSroItemSerialNo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 180 };
+        for (int i = 1; i <= 100; i++) cmbSroItemSerialNo.Items.Add(i.ToString());
+        cmbSroItemSerialNo.SelectedIndex = -1; // no default selection
+
         txtTotalValue = CreateTextBox();
         txtValueExclGST = CreateTextBox();
         txtSalesTaxAmount = CreateTextBox();
@@ -247,9 +275,11 @@ public class GenerateInvoiceForm : Form
             ("Excl GST:", txtValueExclGST),
             ("Sales Tax:", txtSalesTaxAmount),
             ("Further Tax:", txtFurtherTaxAmount),
-            /* ("Extra Tax:", txtExtraTaxAmount),*/
+             /* ("Extra Tax:", txtExtraTaxAmount),*/
              ("Sale Type:", cmbSaleType),
-            ("Notes:", txtItemNotes) // Add Notes to UI
+             ("SRO Item Serial No:", cmbSroItemSerialNo),
+             ("SRO Schedule:", cmbSroSchedule)
+           /* ("Notes:", txtItemNotes)*/ // Add Notes to UI
         );
 
         FlowLayoutPanel itemButtons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 40 };
@@ -286,7 +316,12 @@ public class GenerateInvoiceForm : Form
         dgvItems.Columns.Add("SalesTaxAmount", "Sales Tax Amount");
         dgvItems.Columns.Add("FurtherTaxAmount", "Further Tax Amount");
         dgvItems.Columns.Add("saleType", "Sale Type");
+        dgvItems.Columns.Add("sroItemSerialNo", "SRO Item Serial No");
+        dgvItems.Columns.Add("sroScheduleNo", "SRO/Schedule No");
         dgvItems.Columns.Add("Notes", "Notes");
+
+
+
 
 
         dgvItems.BackgroundColor = Color.White;
@@ -320,15 +355,14 @@ public class GenerateInvoiceForm : Form
         };
         btnPost = CreateButton("📤 Post Invoice", Color.SteelBlue);
         btnValidateInvoice = CreateButton("✅ Validate Invoice", Color.OrangeRed);
-        btnSave = CreateButton("💾 Save Invoice", Color.DarkSlateGray);
-        gridButtons.Controls.AddRange(new Control[] { btnPost, btnValidateInvoice, btnSave });
+        // Save button removed from UI per request
+        gridButtons.Controls.AddRange(new Control[] { btnPost, btnValidateInvoice });
         btnValidateInvoice.Click += btnValidate_Click;
         btnPost.Click += btnSubmit_Click;
-        btnSave.Click += BtnSave_Click;
-
+        // Save functionality disabled per request
 
         btnPost.Enabled = false;
-        btnSave.Enabled = false;  // default disabled
+        // Save button is removed; nothing to enable/disable
         txtQuantity.TextChanged += RecalculateSalesTax;
         txtUnitPrice.TextChanged += RecalculateSalesTax;
         txtProdRate.TextChanged += RecalculateSalesTax;
@@ -366,14 +400,17 @@ public class GenerateInvoiceForm : Form
 
         products = DatabaseHelper.GetProducts();
         cmbHSCode.DataSource = products;
-        cmbHSCode.DisplayMember = "hsCode";
+        // Show product description in dropdown; HS Code will appear in txtHSCode
+        cmbHSCode.DisplayMember = "productDescription";
         cmbHSCode.ValueMember = "productId";
         cmbHSCode.SelectedIndexChanged += (s, e) =>
         {
             if (cmbHSCode.SelectedIndex >= 0)
             {
                 DataRow row = products.Rows[cmbHSCode.SelectedIndex];
+                // fill description textbox and HS code textbox
                 txtProdDesc.Text = row["productDescription"].ToString();
+                txtHSCode.Text = row["hsCode"].ToString();
                 txtProdRate.Text = row["rate"].ToString();
                 txtProdUOM.Text = row["uoM"].ToString();
             }
@@ -405,15 +442,7 @@ public class GenerateInvoiceForm : Form
         }
         else
         {
-            foreach (DataGridViewRow row in dgvItems.Rows)
-            {
-                if (row.Cells["HSCode"].Value?.ToString() == cmbHSCode.Text &&
-                    row.Cells["ScenarioID"].Value?.ToString() == cmbScenario.Text)
-                {
-                    MessageBox.Show("⚠️ Duplicate entry!");
-                    return;
-                }
-            }
+
             int idx = dgvItems.Rows.Add();
             FillRow(dgvItems.Rows[idx]);
         }
@@ -453,7 +482,28 @@ public class GenerateInvoiceForm : Form
             txtFurtherTaxAmount.Text = row.Cells["FurtherTaxAmount"].Value?.ToString();
             //txtExtraTaxAmount.Text = row.Cells["ExtraTaxAmount"].Value?.ToString();
             cmbSaleType.Text = row.Cells["saleType"].Value?.ToString();
+            // If sroScheduleNo column exists, ignore if empty
+            // (no UI field for SRO currently)
+            cmbSroSchedule.Text = row.Cells["sroScheduleNo"]?.Value?.ToString() ?? string.Empty;
+            cmbSroItemSerialNo.Text = row.Cells["sroItemSerialNo"]?.Value?.ToString() ?? string.Empty;
+
             txtItemNotes.Text = row.Cells["Notes"].Value?.ToString();
+
+            // If grid stores HS Code but combobox shows descriptions, select matching product so combobox shows description
+            string hsFromRow = row.Cells["HSCode"].Value?.ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(hsFromRow) && products != null)
+            {
+                for (int i = 0; i < products.Rows.Count; i++)
+                {
+                    if (products.Rows[i]["hsCode"].ToString() == hsFromRow)
+                    {
+                        cmbHSCode.SelectedIndex = i;
+                        // also set HS code textbox
+                        txtHSCode.Text = hsFromRow;
+                        break;
+                    }
+                }
+            }
 
             btnAddItem.Text = "✏️ Update Item";
         }
@@ -463,7 +513,13 @@ public class GenerateInvoiceForm : Form
     {
         //row.Cells["InvoiceNo"].Value = txtInvoiceNumber.Text;
         row.Cells["ScenarioID"].Value = cmbScenario.Text;
-        row.Cells["HSCode"].Value = cmbHSCode.Text;
+        // Ensure HS Code cell gets actual HS code even though dropdown shows description
+        string selectedHs = "";
+        if (cmbHSCode.SelectedIndex >= 0 && products != null)
+        {
+            selectedHs = products.Rows[cmbHSCode.SelectedIndex]["hsCode"].ToString();
+        }
+        row.Cells["HSCode"].Value = selectedHs;
         row.Cells["Product_Desc"].Value = txtProdDesc.Text;
         row.Cells["UOM"].Value = txtProdUOM.Text;
         row.Cells["Quantity"].Value = txtQuantity.Text;
@@ -476,6 +532,11 @@ public class GenerateInvoiceForm : Form
         row.Cells["FurtherTaxAmount"].Value = txtFurtherTaxAmount.Text;
         // row.Cells["ExtraTaxAmount"].Value = txtExtraTaxAmount.Text;
         row.Cells["saleType"].Value = cmbSaleType.Text;
+        // ensure sroScheduleNo exists to avoid missing column errors
+        if (dgvItems.Columns.Contains("sroScheduleNo"))
+            row.Cells["sroScheduleNo"].Value = cmbSroSchedule.Text;
+        if (dgvItems.Columns.Contains("sroItemSerialNo"))
+            row.Cells["sroItemSerialNo"].Value = cmbSroItemSerialNo.Text;
 
         row.Cells["Notes"].Value = txtItemNotes.Text;
     }
@@ -490,6 +551,8 @@ public class GenerateInvoiceForm : Form
         txtFurtherTaxAmount.Clear();
         // txtExtraTaxAmount.Clear();
         txtItemNotes.Clear();
+        if (cmbSroSchedule != null) cmbSroSchedule.SelectedIndex = 0;
+        if (cmbSroItemSerialNo != null) cmbSroItemSerialNo.SelectedIndex = -1;
         editingRowIndex = -1;
         btnAddItem.Text = "➕ Add Item";
     }
@@ -622,6 +685,13 @@ public class GenerateInvoiceForm : Form
     {
         try
         {
+            // Ensure SRO values are present for items with rates other than 18%
+
+            if (!EnsureSroForItems(out string sroErr))
+            {
+                MessageBox.Show($"⚠️ Validation blocked: {sroErr}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             btnValidateInvoice.Enabled = false;
             progressBar.Visible = true;
             this.UseWaitCursor = true;
@@ -648,8 +718,6 @@ public class GenerateInvoiceForm : Form
             this.UseWaitCursor = false;
         }
     }
-
-
 
 
 
@@ -685,9 +753,14 @@ public class GenerateInvoiceForm : Form
     {
         try
         {
+            // Ensure SRO values are present for items with rates other than 18% before posting
+            if (!EnsureSroForItems(out string sroErrPost))
+            {
+                MessageBox.Show($"⚠️ Posting blocked: {sroErrPost}", "Posting Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             // Disable buttons during processing
             btnPost.Enabled = false;
-            btnSave.Enabled = false;
             btnValidateInvoice.Enabled = false;
             progressBar.Visible = true;
             this.UseWaitCursor = true;
@@ -700,43 +773,101 @@ public class GenerateInvoiceForm : Form
             string result = await service.PostInvoiceDataAsync(jsonPayload, sellerToken);
 
             // --- 3. Parse response ---
-            string invoiceNumber = null;
+            string invoiceNumber = TryExtractInvoiceNumber(result);
 
-            if (!string.IsNullOrWhiteSpace(result))
-            {
-                // Sirf JSON portion nikaalo (in case API returns extra headers)
-                int bodyIndex = result.IndexOf("{");
-                if (bodyIndex >= 0)
-                {
-                    string jsonBody = result.Substring(bodyIndex);
-
-                    try
-                    {
-                        var jsonResponse = JObject.Parse(jsonBody);
-
-                        // FBR response key check
-                        if (jsonResponse["invoiceNumber"] != null)
-                            invoiceNumber = jsonResponse["invoiceNumber"].ToString();
-                    }
-                    catch
-                    {
-                        MessageBox.Show("⚠️ Failed to parse invoice number from FBR response.",
-                            "Parsing Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
-                }
-            }
-
-            // --- 4. Save to database if successful ---
+            // --- 4. Handle result ---
             if (!string.IsNullOrEmpty(invoiceNumber))
             {
+                // Save posted invoice locally with FBR invoice number
+                try
+                {
+                    // Resolve customerId and sellerId from selected controls
+                    int customerId = cmbBuyerName.SelectedValue is int cv ? cv : (int)Convert.ToInt32(cmbBuyerName.SelectedValue);
+                    int sellerId = cmbSellerName.SelectedValue is int sv ? sv : (int)Convert.ToInt32(cmbSellerName.SelectedValue);
 
-                PostAndSave(invoiceNumber);
+                    decimal subTotal = 0, totalTax = 0, grandTotal = 0;
+                    foreach (DataGridViewRow r in dgvItems.Rows)
+                    {
+                        subTotal += Convert.ToDecimal(r.Cells["TotalValue"].Value ?? 0m);
+                        totalTax += Convert.ToDecimal(r.Cells["SalesTaxAmount"].Value ?? 0m);
+                    }
+                    grandTotal = subTotal + totalTax + dgvItems.Rows.Cast<DataGridViewRow>().Sum(r => Convert.ToDecimal(r.Cells["FurtherTaxAmount"].Value ?? 0m));
 
-                
+                    int insertedInvoiceId = DatabaseHelper.PostInvoice(
+                        customerId,
+                        sellerId,
+                        DateTime.Now,
+                        subTotal,
+                        totalTax,
+                        0m,
+                        grandTotal,
+                        "",
+                        "Unpaid",
+                        "Posted",
+                        invoiceNumber
+                    );
+
+                    // Save items
+                    foreach (DataGridViewRow row in dgvItems.Rows)
+                    {
+
+
+                        if (row.IsNewRow) continue;
+                        string hsCode = row.Cells["HSCode"].Value?.ToString();
+                        int productId = DatabaseHelper.GetProductIdByHsCode(hsCode);
+                        if (productId == -1) productId = 0; // fallback
+
+                        string desc = row.Cells["Product_Desc"].Value?.ToString();
+                        decimal qty = Convert.ToDecimal(row.Cells["Quantity"].Value ?? 0m);
+                        string rate = row.Cells["Rate"].Value?.ToString() ?? "";
+                        decimal unitPrice = Convert.ToDecimal(row.Cells["UnitPrice"].Value ?? 0m);
+                        decimal totalVal = Convert.ToDecimal(row.Cells["TotalValue"].Value ?? 0m);
+                        decimal valueExcl = Convert.ToDecimal(row.Cells["ValueExclGST"].Value ?? 0m);
+                        decimal salesTax = Convert.ToDecimal(row.Cells["SalesTaxAmount"].Value ?? 0m);
+                        decimal further = Convert.ToDecimal(row.Cells["FurtherTaxAmount"].Value ?? 0m);
+                        string saleType = row.Cells["saleType"].Value?.ToString() ?? "Goods at standard rate";
+                        string sroSerial = row.Cells["sroItemSerialNo"]?.Value?.ToString() ?? "";
+                        string sroSched = row.Cells["sroScheduleNo"]?.Value?.ToString() ?? "";
+
+                        DatabaseHelper.AddInvoiceItem(
+                            insertedInvoiceId,
+                            productId,
+                            desc,
+                            qty,
+                            rate,
+                            unitPrice,
+                            totalVal,
+                            valueExcl,
+                            0m,
+                            salesTax,
+                            0m,
+                            0m,
+                            further,
+                            0m,
+                            0m,
+                            saleType,
+                            sroSerial,
+                            sroSched
+                        );
+                    }
+
+                    MessageBox.Show($"✅ Posted to FBR and saved locally.\nFBR Invoice No: {invoiceNumber}", "Posted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    dgvItems.Rows.Clear();
+                    ClearFields();
+                    UpdateSubtotal();
+                    txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Posted to FBR but failed to save locally: " + ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             else
             {
-                MessageBox.Show("❌ FBR response did not contain a valid invoice number.",
+                // Show truncated raw response for debugging
+                string display = string.IsNullOrWhiteSpace(result) ? "(empty response)" : result;
+                if (display.Length > 1500) display = display.Substring(0, 1500) + "...";
+                MessageBox.Show($"❌ FBR response did not contain a valid invoice number.\n\nRaw response:\n{display}",
                     "Posting Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -749,15 +880,11 @@ public class GenerateInvoiceForm : Form
         {
             // Enable UI again
             btnPost.Enabled = true;
-            btnSave.Enabled = true;
             btnValidateInvoice.Enabled = true;
             progressBar.Visible = false;
             this.UseWaitCursor = false;
         }
     }
-
-
-
 
 
 
@@ -768,16 +895,17 @@ public class GenerateInvoiceForm : Form
             invoiceType = "Sale Invoice",
             invoiceDate = DateTime.Now.ToString("yyyy-MM-dd"),
             sellerNTNCNIC = txtSellerNTN.Text,
-            sellerBusinessName = txtSellerBusiness.Text,
+            sellerBusinessName = string.IsNullOrWhiteSpace(txtSellerBusiness.Text) ? (cmbSellerName?.Text ?? "") : txtSellerBusiness.Text,
             sellerProvince = txtSellerProvince.Text,
             sellerAddress = txtSellerAddress.Text,
             buyerNTNCNIC = txtBuyerNTN.Text,
-            buyerBusinessName = cmbBuyerName.Text,
+            buyerBusinessName = string.IsNullOrWhiteSpace(cmbBuyerName?.Text) ? txtBuyerNTN.Text : cmbBuyerName.Text,
             buyerProvince = txtBuyerProvince.Text,
             buyerAddress = txtBuyerAddress.Text,
             buyerRegistrationType = txtBuyerRegType.Text,
             invoiceRefNo = txtInvoiceNumber.Text,
             scenarioId = cmbScenario.Text,
+
             items = GetInvoiceItems()
         };
 
@@ -792,6 +920,16 @@ public class GenerateInvoiceForm : Form
         {
             if (row.IsNewRow) continue;
 
+            decimal quantity = Convert.ToDecimal(row.Cells["Quantity"].Value ?? 0m);
+            decimal totalValues = Convert.ToDecimal(row.Cells["TotalValue"].Value ?? 0m);
+            decimal valueSalesExcludingST = Convert.ToDecimal(row.Cells["ValueExclGST"].Value ?? 0m);
+            decimal salesTaxApplicable = Convert.ToDecimal(row.Cells["SalesTaxAmount"].Value ?? 0m);
+            decimal furtherTax = Convert.ToDecimal(row.Cells["FurtherTaxAmount"].Value ?? 0m);
+
+            // Prefer grid cell value for SRO schedule, fallback to UI dropdown
+            string sroSchedule = row.Cells["sroScheduleNo"]?.Value?.ToString();
+            if (string.IsNullOrWhiteSpace(sroSchedule)) sroSchedule = cmbSroSchedule?.Text;
+
             items.Add(new
             {
                 hsCode = row.Cells["HSCode"].Value?.ToString(),
@@ -799,21 +937,23 @@ public class GenerateInvoiceForm : Form
                 rate = row.Cells["Rate"].Value?.ToString(),
                 uoM = row.Cells["UOM"].Value?.ToString(),
 
-                // Numbers properly formatted
-                quantity = Convert.ToDecimal(row.Cells["Quantity"].Value ?? 0).ToString("0.####"), // up to 4 decimals
-                totalValues = Convert.ToDecimal(row.Cells["TotalValue"].Value ?? 0).ToString("0.00"),
-                valueSalesExcludingST = Convert.ToDecimal(row.Cells["ValueExclGST"].Value ?? 0).ToString("0.00"),
-                salesTaxApplicable = Convert.ToDecimal(row.Cells["SalesTaxAmount"].Value ?? 0).ToString("0.00"),
-                furtherTax = Convert.ToDecimal(row.Cells["FurtherTaxAmount"].Value ?? 0).ToString("0.00"),
+                // Numbers as numeric types
+                quantity = quantity,
+                totalValues = totalValues,
+                valueSalesExcludingST = valueSalesExcludingST,
 
                 fixedNotifiedValueOrRetailPrice = 0.00m,
+                salesTaxApplicable = salesTaxApplicable,
                 salesTaxWithheldAtSource = 0.00m,
-                extraTax = "",
+                extraTax = "0",
+                furtherTax = furtherTax,
                 fedPayable = 0.00m,
                 discount = 0.00m,
+
                 saleType = row.Cells["saleType"].Value?.ToString() ?? "Goods at standard rate",
-                sroItemSerialNo = "",
-                notes = row.Cells["Notes"].Value?.ToString()
+                sroScheduleNo = sroSchedule ?? "",
+                notes = row.Cells["Notes"].Value?.ToString(),
+                sroItemSerialNo = row.Cells["sroItemSerialNo"]?.Value?.ToString() ?? ""
             });
 
         }
@@ -848,7 +988,6 @@ public class GenerateInvoiceForm : Form
 
                 if (action == "Validation")
                     btnPost.Enabled = true;
-                btnSave.Enabled = true;
                 // sirf validation ke baad post enable hoga
                 // sirf validation ke baad post enable hoga
             }
@@ -862,7 +1001,6 @@ public class GenerateInvoiceForm : Form
                 );
                 if (action == "Validation")
                     btnPost.Enabled = false;
-                btnSave.Enabled = false;
             }
         }
         catch
@@ -875,242 +1013,8 @@ public class GenerateInvoiceForm : Form
             );
             if (action == "Validation")
                 btnPost.Enabled = false;
-            btnSave.Enabled = false;
         }
     }
-
-    private void BtnSave_Click(object sender, EventArgs e)
-    {
-        try
-        {
-            if (dgvItems.Rows.Count == 0)
-            {
-                MessageBox.Show("⚠️ No items to save!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            int customerId = 0, sellerId = 0;
-            int.TryParse(cmbBuyerName.SelectedValue?.ToString(), out customerId);
-            int.TryParse(cmbSellerName.SelectedValue?.ToString(), out sellerId);
-            DateTime invoiceDate = DateTime.Now;
-
-            decimal subTotal = 0, totalTax = 0, discount = 0;
-
-            // Collect invoice-level notes from all items
-            string notesValue = string.Join("; ", dgvItems.Rows
-                .Cast<DataGridViewRow>()
-                .Where(r => !r.IsNewRow)
-                .Select(r => r.Cells["Notes"].Value?.ToString()));
-
-            foreach (DataGridViewRow row in dgvItems.Rows)
-            {
-                if (row.IsNewRow) continue;
-
-                decimal rowTotal = 0, rowSalesTax = 0, rowFurtherTax = 0;
-                decimal.TryParse(row.Cells["TotalValue"].Value?.ToString(), out rowTotal);
-                decimal.TryParse(row.Cells["SalesTaxAmount"].Value?.ToString(), out rowSalesTax);
-                decimal.TryParse(row.Cells["FurtherTaxAmount"].Value?.ToString(), out rowFurtherTax);
-
-                subTotal += rowTotal;
-                totalTax += rowSalesTax + rowFurtherTax;
-            }
-
-            decimal grandTotal = subTotal + totalTax - discount;
-
-            // Insert Invoice with notes
-            int invoiceId = DatabaseHelper.AddInvoice(
-                customerId,
-                sellerId,
-                invoiceDate,
-                subTotal,
-                totalTax,
-                discount,
-                grandTotal,
-                notes: notesValue      // ✅ Save all item notes
-
-            );
-
-            if (invoiceId <= 0)
-                throw new Exception("❌ Failed to insert invoice.");
-
-            // Insert Items
-            foreach (DataGridViewRow row in dgvItems.Rows)
-            {
-                if (row.IsNewRow) continue;
-
-                int productId = 0;
-                if (cmbHSCode.SelectedIndex >= 0)
-                    int.TryParse(products.Rows[cmbHSCode.SelectedIndex]["productId"]?.ToString(), out productId);
-
-                decimal quantity = 0, unitPrice = 0, rate = 0, totalValues = 0, valueExclGST = 0, salesTax = 0, furtherTax = 0;
-                decimal.TryParse(row.Cells["Quantity"].Value?.ToString(), out quantity);
-                decimal.TryParse(row.Cells["UnitPrice"].Value?.ToString(), out unitPrice);
-                decimal.TryParse(row.Cells["rate"].Value?.ToString(), out rate);
-                decimal.TryParse(row.Cells["TotalValue"].Value?.ToString(), out totalValues);
-                decimal.TryParse(row.Cells["ValueExclGST"].Value?.ToString(), out valueExclGST);
-                decimal.TryParse(row.Cells["SalesTaxAmount"].Value?.ToString(), out salesTax);
-                decimal.TryParse(row.Cells["FurtherTaxAmount"].Value?.ToString(), out furtherTax);
-                decimal ratee = 0;
-                decimal.TryParse(row.Cells["Rate"].Value?.ToString().Replace("%", "").Trim(), out ratee);
-                // ✅ Get Sale Type from the grid or dropdown
-                string saleType = row.Cells["saleType"]?.Value?.ToString();
-                if (string.IsNullOrEmpty(saleType))
-                    saleType = cmbSaleType.Text; // fallback to current dropdown selection
-                DatabaseHelper.AddInvoiceItem(
-                    invoiceId,
-                    productId,
-                    description: row.Cells["Product_Desc"].Value?.ToString(),
-                    quantity: quantity,
-                    rate: ratee.ToString(),
-                    unitPrice: unitPrice,
-                    totalValues: totalValues,
-                    valueSalesExcludingST: valueExclGST,
-                    fixedNotifiedValueOrRetailPrice: 0,
-                    salesTaxApplicable: salesTax,
-                    salesTaxWithheldAtSource: 0,
-                    extraTax: 0,
-                    furtherTax: furtherTax,
-                    fedPayable: 0,
-                    discount: 0,
-                    saleType: saleType,
-                    sroItemSerialNo: ""
-                );
-            }
-
-            MessageBox.Show($"✅ Invoice Saved  successfully\nInvoice ID: {invoiceId}",
-                            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            dgvItems.Rows.Clear();
-            ClearFields();
-            UpdateSubtotal();
-            txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
-            this.Hide();
-            new DashboardForm().Show();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"❌ Error saving posted invoice: {ex.Message}",
-                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-
-    private void PostAndSave(string fbrInvoiceNo)
-    {
-        try
-        {
-            if (dgvItems.Rows.Count == 0)
-            {
-                MessageBox.Show("⚠️ No items to save!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            int customerId = 0, sellerId = 0;
-            int.TryParse(cmbBuyerName.SelectedValue?.ToString(), out customerId);
-            int.TryParse(cmbSellerName.SelectedValue?.ToString(), out sellerId);
-            DateTime invoiceDate = DateTime.Now;
-
-            decimal subTotal = 0, totalTax = 0, discount = 0;
-
-            // Collect invoice-level notes from all items
-            string notesValue = string.Join("; ", dgvItems.Rows
-                .Cast<DataGridViewRow>()
-                .Where(r => !r.IsNewRow)
-                .Select(r => r.Cells["Notes"].Value?.ToString()));
-
-            foreach (DataGridViewRow row in dgvItems.Rows)
-            {
-                if (row.IsNewRow) continue;
-
-                decimal rowTotal = 0, rowSalesTax = 0, rowFurtherTax = 0;
-                decimal.TryParse(row.Cells["TotalValue"].Value?.ToString(), out rowTotal);
-                decimal.TryParse(row.Cells["SalesTaxAmount"].Value?.ToString(), out rowSalesTax);
-                decimal.TryParse(row.Cells["FurtherTaxAmount"].Value?.ToString(), out rowFurtherTax);
-
-                subTotal += rowTotal;
-                totalTax += rowSalesTax + rowFurtherTax;
-            }
-
-            decimal grandTotal = subTotal + totalTax - discount;
-
-            // Insert Invoice with notes
-            int invoiceId = DatabaseHelper.PostInvoice(
-                customerId,
-                sellerId,
-                invoiceDate,
-                subTotal,
-                totalTax,
-                discount,
-                grandTotal,
-                notes: notesValue,        // ✅ Save all item notes
-
-                fbrInvoiceNumber: fbrInvoiceNo
-            );
-
-            if (invoiceId <= 0)
-                throw new Exception("❌ Failed to insert invoice.");
-
-            // Insert Items
-            foreach (DataGridViewRow row in dgvItems.Rows)
-            {
-                if (row.IsNewRow) continue;
-
-                int productId = 0;
-                if (cmbHSCode.SelectedIndex >= 0)
-                    int.TryParse(products.Rows[cmbHSCode.SelectedIndex]["productId"]?.ToString(), out productId);
-
-                decimal quantity = 0, unitPrice = 0, rate = 0, totalValues = 0, valueExclGST = 0, salesTax = 0, furtherTax = 0;
-                decimal.TryParse(row.Cells["Quantity"].Value?.ToString(), out quantity);
-                decimal.TryParse(row.Cells["UnitPrice"].Value?.ToString(), out unitPrice);
-                decimal.TryParse(row.Cells["Rate"].Value?.ToString(), out rate);
-                decimal.TryParse(row.Cells["TotalValue"].Value?.ToString(), out totalValues);
-                decimal.TryParse(row.Cells["ValueExclGST"].Value?.ToString(), out valueExclGST);
-                decimal.TryParse(row.Cells["SalesTaxAmount"].Value?.ToString(), out salesTax);
-                decimal.TryParse(row.Cells["FurtherTaxAmount"].Value?.ToString(), out furtherTax);
-                decimal rateee = 0;
-                decimal.TryParse(row.Cells["Rate"].Value?.ToString().Replace("%", "").Trim(), out rateee);
-                // ✅ Get Sale Type from the grid or dropdown
-                string saleType = row.Cells["saleType"]?.Value?.ToString();
-                if (string.IsNullOrEmpty(saleType))
-                    saleType = cmbSaleType.Text; // fallback to current dropdown selection
-                DatabaseHelper.AddInvoiceItem(
-                    invoiceId,
-                    productId,
-                    description: row.Cells["Product_Desc"].Value?.ToString(),
-                    quantity: quantity,
-                    rate: rateee.ToString(),
-                    unitPrice: unitPrice,
-                    totalValues: totalValues,
-                    valueSalesExcludingST: valueExclGST,
-                    fixedNotifiedValueOrRetailPrice: 0,
-                    salesTaxApplicable: salesTax,
-                    salesTaxWithheldAtSource: 0,
-                    extraTax: 0,
-                    furtherTax: furtherTax,
-                    fedPayable: 0,
-                    discount: 0,
-                    saleType: saleType,
-                    sroItemSerialNo: ""
-                );
-            }
-
-            MessageBox.Show($"✅ Invoice posted successfully!");
-
-            dgvItems.Rows.Clear();
-            ClearFields();
-            UpdateSubtotal();
-            txtInvoiceNumber.Text = GetNextInvoiceNumber().ToString();
-            this.Hide();
-            new DashboardForm().Show();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"❌ Error saving posted invoice: {ex.Message}",
-                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-
 
     private void RecalculateSalesTax(object sender, EventArgs e)
     {
@@ -1147,7 +1051,7 @@ public class GenerateInvoiceForm : Form
                 salesTax = totalValue - valueExclGST;
                 break;
 
-            default: // Fallback
+            default: // Fallbacka
                 salesTax = totalValue * rate / 100;
                 valueExclGST = totalValue;
                 break;
@@ -1158,7 +1062,120 @@ public class GenerateInvoiceForm : Form
         txtSalesTaxAmount.Text = salesTax.ToString("N2");
     }
 
+    private bool EnsureSroForItems(out string errorMessage)
+    {
+        // Ensure the sro column exists in the grid so we can set values
+        if (!dgvItems.Columns.Contains("sroScheduleNo"))
+        {
+            dgvItems.Columns.Add("sroScheduleNo", "SRO/Schedule No");
+        }
 
+        int rowNo = 1;
+        foreach (DataGridViewRow row in dgvItems.Rows)
+        {
+            if (row.IsNewRow) { rowNo++; continue; }
 
+            string rateText = row.Cells["Rate"].Value?.ToString() ?? "";
+            decimal rate = 0m;
+            decimal.TryParse(rateText.Replace("%", "").Trim(), out rate);
 
+            // If rate is not 18% ensure there's an SRO value; auto-fill with the example SRO values if missing
+            if (rate != 18m)
+            {
+                string sro = row.Cells["sroScheduleNo"]?.Value?.ToString();
+                if (string.IsNullOrWhiteSpace(sro))
+                {
+                    // default to the example schedule used in Postman
+                    row.Cells["sroScheduleNo"].Value = "EIGHTH SCHEDULE TABLE I";//"ICTO TABLE I";
+                }
+             }
+             rowNo++;
+        }
+
+        errorMessage = null;
+        return true;
+    }
+
+    // Try to extract invoiceNumber or similar from API response string (robust recursive search)
+    private string TryExtractInvoiceNumber(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        int idx = raw.IndexOf('{');
+        string json = idx >= 0 ? raw.Substring(idx) : raw;
+        try
+        {
+            JToken token = JToken.Parse(json);
+            // common keys
+            var candidates = new[] { "invoiceNumber", "fbrInvoiceNumber", "invoiceNo", "validationResponse.invoiceNumber" };
+            foreach (var key in candidates)
+            {
+                // support dotted path
+                if (key.Contains('.'))
+                {
+                    var val = token.SelectToken(key);
+                    if (val != null && !string.IsNullOrWhiteSpace(val.ToString())) return val.ToString();
+                }
+                else
+                {
+                    var found = FindTokenByName(token, key);
+                    if (found != null && !string.IsNullOrWhiteSpace(found.ToString())) return found.ToString();
+                }
+            }
+
+            // fallback: search any property named invoiceNumber (case-insensitive)
+            var any = FindTokenByNameCaseInsensitive(token, "invoiceNumber");
+            if (any != null) return any.ToString();
+        }
+        catch
+        {
+            // ignore parse errors
+        }
+        return null;
+    }
+
+    private JToken FindTokenByName(JToken token, string name)
+    {
+        if (token == null) return null;
+        if (token.Type == JTokenType.Object)
+        {
+            foreach (var prop in token.Children<JProperty>())
+            {
+                if (prop.Name == name) return prop.Value;
+                var rec = FindTokenByName(prop.Value, name);
+                if (rec != null) return rec;
+            }
+        }
+        else if (token.Type == JTokenType.Array)
+        {
+            foreach (var child in token.Children())
+            {
+                var rec = FindTokenByName(child, name);
+                if (rec != null) return rec;
+            }
+        }
+        return null;
+    }
+
+    private JToken FindTokenByNameCaseInsensitive(JToken token, string name)
+    {
+        if (token == null) return null;
+        if (token.Type == JTokenType.Object)
+        {
+            foreach (var prop in token.Children<JProperty>())
+            {
+                if (string.Equals(prop.Name, name, StringComparison.OrdinalIgnoreCase)) return prop.Value;
+                var rec = FindTokenByNameCaseInsensitive(prop.Value, name);
+                if (rec != null) return rec;
+            }
+        }
+        else if (token.Type == JTokenType.Array)
+        {
+            foreach (var child in token.Children())
+            {
+                var rec = FindTokenByNameCaseInsensitive(child, name);
+                if (rec != null) return rec;
+            }
+        }
+        return null;
+    }
 }
