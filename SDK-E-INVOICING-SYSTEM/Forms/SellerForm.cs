@@ -1,4 +1,4 @@
-﻿using SDK_E_INVOICING_SYSTEM.Data;
+using SDK_E_INVOICING_SYSTEM.Data;
 using System;
 using System.Data;
 using System.Drawing;
@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 public class SellerForm : Form
 {
-    private TextBox txtBusinessName, txtNTNCNIC, txtProvince, txtAddress, txtRegistrationType, txtToken, txtSearch;
+    private TextBox txtBusinessName, txtNTNCNIC, txtProvince, txtAddress, txtRegistrationType, txtToken, txtSearch, txtInvoiceFooter;
     private PictureBox picLogo;
     private Button btnAdd, btnUpdate, btnDelete, btnClear, btnUploadLogo;
     private DataGridView dgvSellers;
@@ -82,10 +82,13 @@ public class SellerForm : Form
         txtAddress = MakeTextbox();
         txtRegistrationType = MakeTextbox();
         txtToken = MakeTextbox();
+        txtInvoiceFooter = MakeTextbox();
 
         picLogo = new PictureBox { SizeMode = PictureBoxSizeMode.Zoom, BorderStyle = BorderStyle.FixedSingle, Dock = DockStyle.Fill, Height = 100, Width = 150 };
         btnUploadLogo = new Button { Text = "📷 Upload Logo", BackColor = ColorTranslator.FromHtml("#607D8B"), ForeColor = Color.White, Font = new Font("Segoe UI", 9, FontStyle.Bold), Dock = DockStyle.Fill };
         btnUploadLogo.Click += (s, e) => UploadLogo();
+
+        var lblInvoiceFooter = MakeLabel("Invoice Footer *");
 
         fieldsPanel.Controls.Add(lblBusinessName, 0, 0);
         fieldsPanel.Controls.Add(lblNTNCNIC, 1, 0);
@@ -99,9 +102,10 @@ public class SellerForm : Form
         fieldsPanel.Controls.Add(txtAddress, 0, 3);
         fieldsPanel.Controls.Add(txtRegistrationType, 1, 3);
         fieldsPanel.Controls.Add(txtToken, 2, 3);
-        //fieldsPanel.Controls.Add(lblLogo, 0, 4);
-        fieldsPanel.Controls.Add(btnUploadLogo, 1, 4);
-        fieldsPanel.Controls.Add(picLogo, 2, 4);
+        fieldsPanel.Controls.Add(lblInvoiceFooter, 0, 4);
+        fieldsPanel.Controls.Add(txtInvoiceFooter, 0, 5);
+        fieldsPanel.Controls.Add(btnUploadLogo, 1, 5);
+        fieldsPanel.Controls.Add(picLogo, 2, 5);
 
         // Buttons
         var btnPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.LeftToRight, Padding = new Padding(10), AutoSize = true };
@@ -204,7 +208,7 @@ public class SellerForm : Form
         if (!ValidateFields()) return;
         try
         {
-            DatabaseHelper.AddSeller(txtBusinessName.Text, txtNTNCNIC.Text, txtProvince.Text, txtAddress.Text, txtRegistrationType.Text, txtToken.Text, logoBytes);
+            DatabaseHelper.AddSeller(txtBusinessName.Text, txtNTNCNIC.Text, txtProvince.Text, txtAddress.Text, txtRegistrationType.Text, txtToken.Text, logoBytes, txtInvoiceFooter.Text);
             LoadSellers();
             ClearFields();
         }
@@ -220,7 +224,7 @@ public class SellerForm : Form
         if (!ValidateFields()) return;
         try
         {
-            DatabaseHelper.UpdateSeller(selectedSellerId, txtBusinessName.Text, txtNTNCNIC.Text, txtProvince.Text, txtAddress.Text, txtRegistrationType.Text, txtToken.Text, logoBytes);
+            DatabaseHelper.UpdateSeller(selectedSellerId, txtBusinessName.Text, txtNTNCNIC.Text, txtProvince.Text, txtAddress.Text, txtRegistrationType.Text, txtToken.Text, logoBytes, txtInvoiceFooter.Text);
             LoadSellers();
             ClearFields();
         }
@@ -260,6 +264,7 @@ public class SellerForm : Form
         txtAddress.Text = row.Cells["sellerAddress"].Value.ToString();
         txtRegistrationType.Text = row.Cells["registrationType"].Value.ToString();
         txtToken.Text = row.Cells["token"].Value.ToString();
+        txtInvoiceFooter.Text = row.Cells["invoiceFooter"].Value?.ToString();
 
         if (row.Cells["logoPath"].Value != DBNull.Value)
         {
@@ -284,6 +289,7 @@ public class SellerForm : Form
         txtAddress.Clear();
         txtRegistrationType.Clear();
         txtToken.Clear();
+        txtInvoiceFooter.Clear();
         picLogo.Image = null;
         logoBytes = null;
     }
@@ -296,6 +302,7 @@ public class SellerForm : Form
         if (string.IsNullOrWhiteSpace(txtAddress.Text)) { MessageBox.Show("Address is required."); return false; }
         if (string.IsNullOrWhiteSpace(txtRegistrationType.Text)) { MessageBox.Show("Registration Type is required."); return false; }
         if (string.IsNullOrWhiteSpace(txtToken.Text)) { MessageBox.Show("Token is required."); return false; }
+        if (string.IsNullOrWhiteSpace(txtInvoiceFooter.Text)) { MessageBox.Show("Invoice Footer is required."); return false; }
         return true;
     }
 }

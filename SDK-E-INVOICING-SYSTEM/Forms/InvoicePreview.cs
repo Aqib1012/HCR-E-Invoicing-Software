@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -59,6 +59,7 @@ public class InvoicePreviewForm : Form
 
     // PDF generation variables
     private double[] columnWidths; // Add this line to fix columnWidths error
+    private string currentInvoiceFooter = "";
 
     public InvoicePreviewForm(int invoiceId)
     {
@@ -619,6 +620,17 @@ public class InvoicePreviewForm : Form
 
             lblSellerInfo.Text = $"{header["sellerBusinessName"]}\nNTN/CNIC: {header["sellerNTNCNIC"]}\nProvince: {header["sellerProvince"]}\nAddress: {header["sellerAddress"]}";
             lblCustomerInfo.Text = $"{header["customerBusinessName"]}\nNTN/CNIC: {header["customerNTNCNIC"]}\nProvince: {header["customerProvince"]}\nAddress: {header["customerAddress"]}";
+
+            // Set dynamic invoice footer
+            if (header.Table.Columns.Contains("invoiceFooter") && header["invoiceFooter"] != DBNull.Value && !string.IsNullOrWhiteSpace(header["invoiceFooter"].ToString()))
+            {
+                currentInvoiceFooter = header["invoiceFooter"].ToString();
+                footerTextLabel.Text = currentInvoiceFooter;
+            }
+            else
+            {
+                currentInvoiceFooter = footerTextLabel.Text; // fallback to hardcoded default
+            }
 
             // Load items
             DataTable items = ds.Tables["InvoiceItems"];
@@ -1327,7 +1339,7 @@ public class InvoicePreviewForm : Form
             // Draw footer text
             using (Font footerFont = new Font("Arial", 7))
             {
-                string footerText = "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.";
+                string footerText = !string.IsNullOrWhiteSpace(currentInvoiceFooter) ? currentInvoiceFooter : "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
 
                 // Center the footer text
                 SizeF textSize = e.Graphics.MeasureString(footerText, footerFont);
@@ -1349,7 +1361,7 @@ public class InvoicePreviewForm : Form
                 float footerY = e.MarginBounds.Bottom - 40;
                 using (Font footerFont = new Font(FontFamily.GenericSansSerif, 7))
                 {
-                    string footerText = "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
+                    string footerText = !string.IsNullOrWhiteSpace(currentInvoiceFooter) ? currentInvoiceFooter : "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
                     e.Graphics.DrawString(footerText, footerFont, Brushes.Gray, e.MarginBounds.Left, footerY + 5);
                 }
             }
@@ -1546,7 +1558,7 @@ public class InvoicePreviewForm : Form
                     margin, footerY, pageWidth - margin, footerY);
 
                 // Render footer text to a bitmap and draw it to PDF to avoid font embedding problems
-                string footerText = "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
+                string footerText = !string.IsNullOrWhiteSpace(currentInvoiceFooter) ? currentInvoiceFooter : "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
                 try
                 {
                     int dpi = 150;

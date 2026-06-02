@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SQLite;
@@ -71,12 +71,39 @@ CREATE TABLE IF NOT EXISTS Sellers (
     sellerAddress TEXT,
     registrationType TEXT,               -- Registered / Unregistered (sirf Buyer ke liye)
     token TEXT,                           -- Seller-specific token
-    logoPath BLOB                      -- path of logo (png/jpg)
+    logoPath BLOB,                     -- path of logo (png/jpg)
+    invoiceFooter TEXT                 -- seller specific invoice footer
 );";
 
                 using (var cmd = new SQLiteCommand(createSellers, conn))
                 {
                     cmd.ExecuteNonQuery();
+                }
+
+                // Ensure 'invoiceFooter' column exists
+                using (var checkCmd = new SQLiteCommand("PRAGMA table_info('Sellers');", conn))
+                {
+                    using (var reader = checkCmd.ExecuteReader())
+                    {
+                        bool hasInvoiceFooter = false;
+                        while (reader.Read())
+                        {
+                            string colName = reader[1].ToString();
+                            if (string.Equals(colName, "invoiceFooter", StringComparison.OrdinalIgnoreCase))
+                            {
+                                hasInvoiceFooter = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasInvoiceFooter)
+                        {
+                            using (var alter = new SQLiteCommand("ALTER TABLE Sellers ADD COLUMN invoiceFooter TEXT;", conn))
+                            {
+                                alter.ExecuteNonQuery();
+                            }
+                        }
+                    }
                 }
 
 
@@ -395,14 +422,14 @@ CREATE TABLE IF NOT EXISTS Payments (
             }
         }
         // ---------------- Sellers CRUD ----------------
-        public static void AddSeller(string businessName, string ntncnic, string province, string address, string regType, string token, byte[] logo)
+        public static void AddSeller(string businessName, string ntncnic, string province, string address, string regType, string token, byte[] logo, string invoiceFooter)
         {
             using (var conn = new SQLiteConnection(ConnectionString))
             {
                 conn.Open();
                 string sql = @"INSERT INTO Sellers 
-                               (sellerBusinessName, sellerNTNCNIC, sellerProvince, sellerAddress, registrationType, token, logoPath)
-                               VALUES (@bn, @ntn, @prov, @addr, @reg, @tok, @logo)";
+                               (sellerBusinessName, sellerNTNCNIC, sellerProvince, sellerAddress, registrationType, token, logoPath, invoiceFooter)
+                               VALUES (@bn, @ntn, @prov, @addr, @reg, @tok, @logo, @footer)";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@bn", businessName);
@@ -412,20 +439,21 @@ CREATE TABLE IF NOT EXISTS Payments (
                     cmd.Parameters.AddWithValue("@reg", regType);
                     cmd.Parameters.AddWithValue("@tok", token);
                     cmd.Parameters.Add("@logo", DbType.Binary).Value = (object)logo ?? DBNull.Value;
+                    cmd.Parameters.AddWithValue("@footer", invoiceFooter ?? (object)DBNull.Value);
                     cmd.ExecuteNonQuery();
                 }
             }
         }
 
         // ✅ Update seller
-        public static void UpdateSeller(int id, string businessName, string ntncnic, string province, string address, string regType, string token, byte[] logo)
+        public static void UpdateSeller(int id, string businessName, string ntncnic, string province, string address, string regType, string token, byte[] logo, string invoiceFooter)
         {
             using (var conn = new SQLiteConnection(ConnectionString))
             {
                 conn.Open();
                 string sql = @"UPDATE Sellers SET 
                                sellerBusinessName=@bn, sellerNTNCNIC=@ntn, sellerProvince=@prov, 
-                               sellerAddress=@addr, registrationType=@reg, token=@tok, logoPath=@logo 
+                               sellerAddress=@addr, registrationType=@reg, token=@tok, logoPath=@logo, invoiceFooter=@footer 
                                WHERE sellerId=@id";
                 using (var cmd = new SQLiteCommand(sql, conn))
                 {
@@ -437,6 +465,7 @@ CREATE TABLE IF NOT EXISTS Payments (
                     cmd.Parameters.AddWithValue("@tok", token);
                     cmd.Parameters.AddWithValue("@id", id);
                     cmd.Parameters.Add("@logo", DbType.Binary).Value = (object)logo ?? DBNull.Value;
+                    cmd.Parameters.AddWithValue("@footer", invoiceFooter ?? (object)DBNull.Value);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -463,7 +492,7 @@ CREATE TABLE IF NOT EXISTS Payments (
             using (var conn = new SQLiteConnection(ConnectionString))
             {
                 conn.Open();
-                string sql = "SELECT sellerId, sellerBusinessName, sellerNTNCNIC, sellerProvince, sellerAddress, registrationType, token, logoPath FROM Sellers";
+                string sql = "SELECT sellerId, sellerBusinessName, sellerNTNCNIC, sellerProvince, sellerAddress, registrationType, token, logoPath, invoiceFooter FROM Sellers";
 
                 if (!string.IsNullOrWhiteSpace(filter))
                     sql += " WHERE sellerBusinessName LIKE @f OR sellerNTNCNIC LIKE @f";
@@ -486,7 +515,7 @@ CREATE TABLE IF NOT EXISTS Payments (
             using (var conn = new SQLiteConnection(ConnectionString))
             {
                 conn.Open();
-                string sql = "SELECT sellerId, sellerBusinessName, sellerNTNCNIC, sellerProvince, sellerAddress, registrationType, token, logoPath FROM Sellers WHERE sellerId=@sellerId";
+                string sql = "SELECT sellerId, sellerBusinessName, sellerNTNCNIC, sellerProvince, sellerAddress, registrationType, token, logoPath, invoiceFooter FROM Sellers WHERE sellerId=@sellerId";
                 using (var da = new SQLiteDataAdapter(sql, conn))
                 {
                     da.SelectCommand.Parameters.AddWithValue("@sellerId", sellerId);
@@ -857,6 +886,7 @@ SELECT last_insert_rowid();";
             s.sellerProvince, 
             s.sellerAddress, 
             s.logoPath AS sellerLogoPath,
+            s.invoiceFooter,
 
             c.customerBusinessName, 
             c.customerNTNCNIC, 
