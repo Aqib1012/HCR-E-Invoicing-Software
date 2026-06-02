@@ -624,12 +624,17 @@ public class InvoicePreviewForm : Form
             // Set dynamic invoice footer
             if (header.Table.Columns.Contains("invoiceFooter") && header["invoiceFooter"] != DBNull.Value && !string.IsNullOrWhiteSpace(header["invoiceFooter"].ToString()))
             {
-                currentInvoiceFooter = header["invoiceFooter"].ToString();
+                string rawFooter = header["invoiceFooter"].ToString();
+                currentInvoiceFooter = rawFooter.Replace("\r\n", " | ").Replace("\n", " | ");
+                while (currentInvoiceFooter.Contains(" |  | "))
+                {
+                    currentInvoiceFooter = currentInvoiceFooter.Replace(" |  | ", " | ");
+                }
                 footerTextLabel.Text = currentInvoiceFooter;
             }
             else
             {
-                currentInvoiceFooter = footerTextLabel.Text; // fallback to hardcoded default
+                currentInvoiceFooter = footerTextLabel.Text.Replace("\r\n", " | ").Replace("\n", " | "); // fallback to hardcoded default
             }
 
             // Load items
