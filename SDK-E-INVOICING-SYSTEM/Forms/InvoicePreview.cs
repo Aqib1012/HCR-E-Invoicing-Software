@@ -537,7 +537,7 @@ public class InvoicePreviewForm : Form
         footerTextLabel = new Label
         {
             Text = "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com",
-            Font = new Font("Segoe UI", 5f, FontStyle.Regular),
+            Font = new Font("Segoe UI", 8.5f, FontStyle.Regular),
             ForeColor = Color.FromArgb(120, 120, 120),
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleCenter,
@@ -1342,7 +1342,7 @@ public class InvoicePreviewForm : Form
             }
 
             // Draw footer text
-            using (Font footerFont = new Font("Arial", 7))
+            using (Font footerFont = new Font("Arial", 8.5f))
             {
                 string footerText = !string.IsNullOrWhiteSpace(currentInvoiceFooter) ? currentInvoiceFooter : "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
 
@@ -1364,7 +1364,7 @@ public class InvoicePreviewForm : Form
             try
             {
                 float footerY = e.MarginBounds.Bottom - 40;
-                using (Font footerFont = new Font(FontFamily.GenericSansSerif, 7))
+                using (Font footerFont = new Font(FontFamily.GenericSansSerif, 8.5f))
                 {
                     string footerText = !string.IsNullOrWhiteSpace(currentInvoiceFooter) ? currentInvoiceFooter : "Phone: +92 51 6144660 | Mobile: +92 300 230 2463, +92 332 5494660 | Email: usmanenterprises63@gmail.com";
                     e.Graphics.DrawString(footerText, footerFont, Brushes.Gray, e.MarginBounds.Left, footerY + 5);
@@ -1569,7 +1569,7 @@ public class InvoicePreviewForm : Form
                     int dpi = 150;
                     double footerWidthPoints = pageWidth - 2 * margin; // in points
                     int bmpWidth = Math.Max(1, (int)Math.Ceiling(footerWidthPoints * dpi / 72.0));
-                    int bmpHeight = Math.Max(1, (int)Math.Ceiling(18 * dpi / 72.0));
+                    int bmpHeight = Math.Max(1, (int)Math.Ceiling(24 * dpi / 72.0));
 
                     using (Bitmap footerBmp = new Bitmap(bmpWidth, bmpHeight))
                     {
@@ -1579,7 +1579,7 @@ public class InvoicePreviewForm : Form
                             g.Clear(Color.Transparent);
                             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
 
-                            using (Font drawFont = new Font("Segoe UI", 7, FontStyle.Regular, GraphicsUnit.Point))
+                            using (Font drawFont = new Font("Segoe UI", 8.5f, FontStyle.Regular, GraphicsUnit.Point))
                             using (Brush drawBrush = new SolidBrush(Color.FromArgb(100, 100, 100)))
                             {
                                 SizeF sz = g.MeasureString(footerText, drawFont);
